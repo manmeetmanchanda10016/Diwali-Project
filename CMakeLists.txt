@@ -20,7 +20,6 @@ function(enable_warnings target)
         )
     endif()
 endfunction()
-
 # Main library
 add_library(minitensor
     src/Shape.cpp
@@ -50,7 +49,19 @@ add_test(
     NAME Phase1Tests
     COMMAND test_phase1
 )
+# Phase 2 tests
+add_executable(test_phase2
+    tests/test_phase2.cpp
+)
 
+target_link_libraries(test_phase2 PRIVATE minitensor)
+
+enable_warnings(test_phase2)
+
+add_test(
+    NAME Phase2Tests
+    COMMAND test_phase2
+)
 # Basic example
 add_executable(basic_example
     examples/main.cpp
@@ -80,6 +91,8 @@ enable_warnings(benchmark_v2)
 
 if(MSVC)
     target_compile_options(test_phase1 PRIVATE /UNDEBUG)
+    target_compile_options(test_phase2 PRIVATE /UNDEBUG)
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     target_compile_options(test_phase1 PRIVATE -UNDEBUG)
+    target_compile_options(test_phase2 PRIVATE -UNDEBUG)
 endif()

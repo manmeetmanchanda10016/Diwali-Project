@@ -1,4 +1,3 @@
-
 #include "minitensor/Storage.h"
 
 #include <algorithm>
@@ -11,15 +10,14 @@
 namespace minitensor {
 
 void Storage::allocate(std::size_t size) {
-
     if (size == 0) {
         buffer_ = nullptr;
         size_ = 0;
         return;
     }
 
-    if (size > std::numeric_limits<std::size_t>::max()
-                   / sizeof(double)) {
+    if (size > std::numeric_limits<std::size_t>::max() /
+                   sizeof(double)) {
         throw std::overflow_error("Storage size overflow");
     }
 
@@ -36,7 +34,6 @@ void Storage::allocate(std::size_t size) {
 }
 
 void Storage::release() noexcept {
-
     if (buffer_ != nullptr) {
         ::operator delete(
             buffer_,
@@ -52,21 +49,22 @@ Storage::Storage(
     std::size_t size,
     double initialValue
 )
-    : buffer_(nullptr), size_(0) {
-
+    : buffer_(nullptr),
+      size_(0) {
     allocate(size);
 
-    std::fill_n(buffer_, size_, initialValue);
+    if (size_ > 0) {
+        std::fill_n(buffer_, size_, initialValue);
+    }
 }
 
 Storage::~Storage() {
     release();
 }
 
-// Deep copy constructor
 Storage::Storage(const Storage& other)
-    : buffer_(nullptr), size_(0) {
-
+    : buffer_(nullptr),
+      size_(0) {
     allocate(other.size_);
 
     if (size_ > 0) {
@@ -78,9 +76,7 @@ Storage::Storage(const Storage& other)
     }
 }
 
-// Copy assignment
 Storage& Storage::operator=(const Storage& other) {
-
     if (this != &other) {
         Storage temp(other);
         swap(temp);
@@ -89,20 +85,15 @@ Storage& Storage::operator=(const Storage& other) {
     return *this;
 }
 
-// Move constructor
 Storage::Storage(Storage&& other) noexcept
     : buffer_(other.buffer_),
       size_(other.size_) {
-
     other.buffer_ = nullptr;
     other.size_ = 0;
 }
 
-// Move assignment
 Storage& Storage::operator=(Storage&& other) noexcept {
-
     if (this != &other) {
-
         release();
 
         buffer_ = other.buffer_;
@@ -132,18 +123,14 @@ const double* Storage::data() const noexcept {
 }
 
 void Storage::fill(double value) {
-
-    std::fill_n(
-        buffer_,
-        size_,
-        value
-    );
+    if (size_ > 0) {
+        std::fill_n(buffer_, size_, value);
+    }
 }
 
 void Storage::swap(Storage& other) noexcept {
-
     std::swap(buffer_, other.buffer_);
     std::swap(size_, other.size_);
 }
 
-}
+} // namespace minitensor

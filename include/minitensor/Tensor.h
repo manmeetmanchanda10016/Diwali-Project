@@ -15,6 +15,10 @@ private:
     Shape shape_;
     Storage storage_;
 
+    std::size_t offset(
+        const std::vector<std::size_t>& indices
+    ) const;
+
 public:
     explicit Tensor(
         const std::vector<std::size_t>& dimensions,
@@ -41,6 +45,49 @@ public:
     const double* data() const noexcept;
 
     void fill(double value);
+
+    double& at(
+        const std::vector<std::size_t>& indices
+    );
+
+    const double& at(
+        const std::vector<std::size_t>& indices
+    ) const;
+
+    double& at(
+        std::initializer_list<std::size_t> indices
+    );
+
+    const double& at(
+        std::initializer_list<std::size_t> indices
+    ) const;
+
+    double& operator()(
+        std::initializer_list<std::size_t> indices
+    );
+
+    const double& operator()(
+        std::initializer_list<std::size_t> indices
+    ) const;
+
+    double& operator()(
+        const std::vector<std::size_t>& indices
+    );
+
+    const double& operator()(
+        const std::vector<std::size_t>& indices
+    ) const;
+
+    double& flat_at(std::size_t index);
+    const double& flat_at(std::size_t index) const;
+
+    void reshape(
+        const std::vector<std::size_t>& dimensions
+    );
+
+    void reshape(
+        std::initializer_list<std::size_t> dimensions
+    );
 };
 
 } // namespace minitensor
