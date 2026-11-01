@@ -6,6 +6,7 @@
 #include <cmath>
 #include <iomanip>
 #include <iostream>
+#include <omp.h>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -13,29 +14,22 @@
 using namespace minitensor;
 using Clock = std::chrono::steady_clock;
 
-// Original sequential i-k-j matrix multiplication
+volatile double benchmark_sink = 0.0;
+
 Tensor normal_matmul(const Tensor& a, const Tensor& b)
 {
     if (a.rank() != 2 || b.rank() != 2)
-    {
-        throw std::invalid_argument(
-            "Matrix multiplication requires 2D tensors"
-        );
-    }
+        throw std::invalid_argument("Matrix multiplication requires 2D tensors");
 
-    const auto& a_shape = a.shape().dimensions();
-    const auto& b_shape = b.shape().dimensions();
+    const auto& as = a.shape().dimensions();
+    const auto& bs = b.shape().dimensions();
 
-    const std::size_t rows = a_shape[0];
-    const std::size_t inner = a_shape[1];
-    const std::size_t cols = b_shape[1];
+    const std::size_t rows = as[0];
+    const std::size_t inner = as[1];
+    const std::size_t cols = bs[1];
 
-    if (inner != b_shape[0])
-    {
-        throw std::invalid_argument(
-            "Incompatible matrix dimensions"
-        );
-    }
+    if (inner != bs[0])
+        throw std::invalid_argument("Incompatible matrix dimensions");
 
     Tensor result({rows, cols}, 0.0);
 
@@ -50,21 +44,14 @@ Tensor normal_matmul(const Tensor& a, const Tensor& b)
             const double value = A[i * inner + k];
 
             for (std::size_t j = 0; j < cols; ++j)
-            {
-                C[i * cols + j] +=
-                    value * B[k * cols + j];
-            }
+                C[i * cols + j] += value * B[k * cols + j];
         }
     }
 
     return result;
 }
 
-// Generate nonuniform matrices
-Tensor create_matrix(
-    std::size_t rows,
-    std::size_t cols,
-    double seed)
+Tensor create_matrix(std::size_t rows, std::size_t cols, double seed)
 {
     Tensor result({rows, cols});
 
@@ -80,43 +67,32 @@ Tensor create_matrix(
     return result;
 }
 
-// Compare two tensor results
 bool compare_results(
     const Tensor& a,
     const Tensor& b,
     double tolerance = 1e-8)
 {
     if (a.shape().dimensions() != b.shape().dimensions())
-    {
         return false;
-    }
 
     for (std::size_t i = 0; i < a.size(); ++i)
     {
         if (std::abs(a.flat_at(i) - b.flat_at(i)) > tolerance)
-        {
             return false;
-        }
     }
 
     return true;
 }
 
-// Measure median execution time
 template <typename Function>
-double measure(
-    Function function,
-    int warmups = 3,
-    int measurements = 9)
+double measure(Function function, int warmups = 2, int measurements = 7)
 {
     for (int i = 0; i < warmups; ++i)
     {
         Tensor result = function();
 
-        volatile double check =
-            result.size() > 0 ? result.flat_at(0) : 0.0;
-
-        (void)check;
+        if (result.size() > 0)
+            benchmark_sink += result.flat_at(result.size() - 1);
     }
 
     std::vector<double> times;
@@ -130,22 +106,33 @@ double measure(
 
         const auto end = Clock::now();
 
-        volatile double check =
-            result.size() > 0 ? result.flat_at(0) : 0.0;
+        if (result.size() > 0)
+            benchmark_sink += result.flat_at(result.size() - 1);
 
-        (void)check;
-
-        const double elapsed =
-            std::chrono::duration<double, std::milli>(
-                end - start
-            ).count();
-
-        times.push_back(elapsed);
+        times.push_back(
+            std::chrono::duration<double, std::milli>(end - start).count()
+        );
     }
 
     std::sort(times.begin(), times.end());
-
     return times[times.size() / 2];
+}
+
+void print_result(const std::string& name, double time)
+{
+    std::cout << std::left << std::setw(28) << name
+              << std::right << std::fixed << std::setprecision(3)
+              << time << " ms\n";
+}
+
+void print_speedup(
+    const std::string& name,
+    double baseline,
+    double time)
+{
+    std::cout << std::left << std::setw(28) << name
+              << std::right << std::fixed << std::setprecision(3)
+              << baseline / time << "x\n";
 }
 
 int main()
@@ -155,183 +142,162 @@ int main()
     };
 
     const std::vector<std::size_t> block_sizes = {
-        16, 32, 64, 128
+        32, 64, 128, 256
     };
 
-    constexpr int warmups = 3;
-    constexpr int measurements = 9;
+    const std::vector<int> thread_counts = {
+        1, 2, 4, 8, 16
+    };
 
-    double global_checksum = 0.0;
+    constexpr int warmups = 2;
+    constexpr int measurements = 7;
 
-    std::cout << "\nMATRIX MULTIPLICATION BENCHMARK\n";
+    omp_set_dynamic(0);
+
+    std::cout << "\nMINITENSOR MATRIX MULTIPLICATION BENCHMARK\n";
     std::cout << "============================================\n";
-
     std::cout << "Warmups: " << warmups
-              << " | Measurements: " << measurements
-              << " | Statistic: Median\n";
+              << " | Measurements: " << measurements << '\n';
 
     for (const std::size_t n : sizes)
     {
-        std::cout << "\n--------------------------------------------\n";
-        std::cout << "Matrix size: " << n << " x " << n << "\n";
-        std::cout << "--------------------------------------------\n";
+        std::cout << "\n============================================\n";
+        std::cout << "MATRIX SIZE: " << n << " x " << n << '\n';
+        std::cout << "============================================\n";
 
         Tensor a = create_matrix(n, n, 1.0);
         Tensor b = create_matrix(n, n, 2.0);
 
-        // Sequential reference
         Tensor reference = normal_matmul(a, b);
-
-        // Correctness checks
-        if (!compare_results(reference, matmul(a, b)) ||
-            !compare_results(reference, matmul_parallel(a, b)))
-        {
-            throw std::runtime_error(
-                "Normal, OpenMP or hybrid correctness check failed"
-            );
-        }
 
         const double normal_time = measure(
             [&]() { return normal_matmul(a, b); },
-            warmups,
-            measurements
+            warmups, measurements
         );
 
-        const double parallel_time = measure(
-            [&]() { return matmul_parallel(a, b); },
-            warmups,
-            measurements
-        );
+        print_result("Normal sequential", normal_time);
 
-        const double hybrid_time = measure(
-            [&]() { return matmul(a, b); },
-            warmups,
-            measurements
-        );
+        double best_blocked_time = 1e100;
+        std::size_t best_block_size = 0;
 
-        double best_blocked_time = 0.0;
-        double best_parallel_blocked_time = 0.0;
+        std::cout << "\nSequential blocked results:\n";
 
-        std::size_t best_blocked_size = 0;
-        std::size_t best_parallel_blocked_size = 0;
-
-        std::cout << "\nBlocked experiments:\n";
-
-        for (const std::size_t block_size : block_sizes)
+        for (const std::size_t block : block_sizes)
         {
-            const double blocked_time = measure(
-                [&]()
-                {
-                    return matmul_blocked(a, b, block_size);
-                },
-                warmups,
-                measurements
+            Tensor result = matmul_blocked(a, b, block);
+
+            if (!compare_results(reference, result))
+                throw std::runtime_error("Blocked correctness check failed");
+
+            const double time = measure(
+                [&]() { return matmul_blocked(a, b, block); },
+                warmups, measurements
             );
 
-            const double parallel_blocked_time = measure(
-                [&]()
-                {
-                    return matmul_parallel_blocked(
-                        a, b, block_size
-                    );
-                },
-                warmups,
-                measurements
-            );
+            print_result("Block " + std::to_string(block), time);
 
-            Tensor blocked_result =
-                matmul_blocked(a, b, block_size);
+            if (time < best_blocked_time)
+            {
+                best_blocked_time = time;
+                best_block_size = block;
+            }
+        }
 
-            Tensor parallel_blocked_result =
-                matmul_parallel_blocked(a, b, block_size);
+        std::cout << "Best sequential block size: "
+                  << best_block_size << '\n';
 
-            if (!compare_results(reference, blocked_result) ||
-                !compare_results(reference, parallel_blocked_result))
+        for (const int threads : thread_counts)
+        {
+            omp_set_num_threads(threads);
+
+            std::cout << "\n---------- THREADS: "
+                      << threads << " ----------\n";
+
+            Tensor parallel_result = matmul_parallel(a, b);
+            Tensor hybrid_result = matmul(a, b);
+
+            if (!compare_results(reference, parallel_result) ||
+                !compare_results(reference, hybrid_result))
             {
                 throw std::runtime_error(
-                    "Blocked multiplication correctness check failed"
+                    "Parallel or hybrid correctness check failed"
                 );
             }
 
-            std::cout << "Block " << std::setw(3) << block_size
-                      << " | Blocked: "
-                      << std::fixed << std::setprecision(3)
-                      << blocked_time << " ms"
-                      << " | Parallel-blocked: "
-                      << parallel_blocked_time << " ms\n";
+            const double parallel_time = measure(
+                [&]() { return matmul_parallel(a, b); },
+                warmups, measurements
+            );
 
-            if (best_blocked_size == 0 ||
-                blocked_time < best_blocked_time)
+            const double hybrid_time = measure(
+                [&]() { return matmul(a, b); },
+                warmups, measurements
+            );
+
+            print_result("OpenMP", parallel_time);
+            print_result("Hybrid", hybrid_time);
+
+            double best_parallel_blocked_time = 1e100;
+            std::size_t best_parallel_block_size = 0;
+
+            for (const std::size_t block : block_sizes)
             {
-                best_blocked_time = blocked_time;
-                best_blocked_size = block_size;
+                Tensor result = matmul_parallel_blocked(a, b, block);
+
+                if (!compare_results(reference, result))
+                {
+                    throw std::runtime_error(
+                        "Parallel-blocked correctness check failed"
+                    );
+                }
+
+                const double time = measure(
+                    [&]() {
+                        return matmul_parallel_blocked(a, b, block);
+                    },
+                    warmups, measurements
+                );
+
+                if (time < best_parallel_blocked_time)
+                {
+                    best_parallel_blocked_time = time;
+                    best_parallel_block_size = block;
+                }
             }
 
-            if (best_parallel_blocked_size == 0 ||
-                parallel_blocked_time < best_parallel_blocked_time)
-            {
-                best_parallel_blocked_time = parallel_blocked_time;
-                best_parallel_blocked_size = block_size;
-            }
+            print_result(
+                "Best parallel-blocked",
+                best_parallel_blocked_time
+            );
+
+            std::cout << "\nSpeedup vs sequential:\n";
+
+            print_speedup("OpenMP", normal_time, parallel_time);
+            print_speedup("Hybrid", normal_time, hybrid_time);
+            print_speedup(
+                "Best sequential blocked",
+                normal_time,
+                best_blocked_time
+            );
+            print_speedup(
+                "Best parallel-blocked",
+                normal_time,
+                best_parallel_blocked_time
+            );
+
+            std::cout << "Best parallel block size: "
+                      << best_parallel_block_size << '\n';
         }
-
-        std::cout << "\nPerformance Results:\n";
-
-        auto print_result = [](
-            const std::string& name,
-            double time)
-        {
-            std::cout << std::left << std::setw(25)
-                      << name
-                      << std::right << std::fixed
-                      << std::setprecision(3)
-                      << time << " ms\n";
-        };
-
-        print_result("Normal sequential", normal_time);
-        print_result("OpenMP", parallel_time);
-        print_result("Hybrid", hybrid_time);
-        print_result("Best blocked", best_blocked_time);
-        print_result(
-            "Best parallel-blocked",
-            best_parallel_blocked_time
-        );
-
-        std::cout << "\nBest block sizes:\n";
-        std::cout << "Blocked: "
-                  << best_blocked_size << '\n';
-
-        std::cout << "Parallel-blocked: "
-                  << best_parallel_blocked_size << '\n';
-
-        std::cout << "\nSpeedup compared with normal:\n";
-
-        std::cout << "OpenMP: "
-                  << normal_time / parallel_time << "x\n";
-
-        std::cout << "Hybrid: "
-                  << normal_time / hybrid_time << "x\n";
-
-        std::cout << "Best blocked: "
-                  << normal_time / best_blocked_time << "x\n";
-
-        std::cout << "Best parallel-blocked: "
-                  << normal_time / best_parallel_blocked_time << "x\n";
 
         for (std::size_t i = 0; i < reference.size(); ++i)
-        {
-            global_checksum += reference.flat_at(i);
-        }
+            benchmark_sink += reference.flat_at(i);
     }
 
     std::cout << "\n============================================\n";
-
-    std::cout << "Global checksum: "
-              << std::fixed << std::setprecision(3)
-              << global_checksum << '\n';
-
-    std::cout << "All correctness checks passed.\n";
     std::cout << "Benchmark completed successfully.\n";
+    std::cout << "Prevent-optimization checksum: "
+              << std::fixed << std::setprecision(3)
+              << benchmark_sink << '\n';
 
     return 0;
 }

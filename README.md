@@ -1,105 +1,68 @@
-# Mini Tensor Library (C++)
+# MiniTensor
 
-A lightweight C++ tensor library developed as part of the **Diwali 2026 Challenge**. The project focuses on efficient multidimensional tensor storage, mathematical operations, memory management, and performance optimization using OpenMP.
+**A lightweight, high-performance multidimensional tensor library written in C++17.**
 
-## Project Overview
+MiniTensor is a custom tensor library built from scratch in C++. It provides multidimensional tensor storage, indexing, mathematical operations, broadcasting, matrix multiplication, reductions, and performance optimizations using SIMD and OpenMP.
 
-The objective is to build a simplified tensor library from scratch in C++, inspired by the fundamental functionality of libraries such as NumPy and PyTorch.
+The project focuses on efficient memory management, contiguous storage, optimized numerical operations, and a clean C++ interface.
 
-The library supports multidimensional tensors, contiguous memory storage, tensor indexing, arithmetic operations, broadcasting, matrix multiplication, and parallel computation.
+---
 
-## Features Implemented
+## Features
 
-### Phase 1 – Tensor Representation and Memory Management
+### 1. Tensor Representation and Memory Management
 - Multidimensional tensor creation.
 - Contiguous memory allocation.
-- 64-byte aligned memory storage.
+- Custom 64-byte aligned storage.
 - Deep copy and move semantics.
-- Memory management and element initialization.
-- Scalar and empty tensor support.
+- Efficient memory management.
+- Shape and element-count tracking.
+- Dimension overflow detection.
 
-### Phase 2 – Multidimensional Indexing and Memory Layout
+### 2. Multidimensional Indexing
 - Row-major memory layout.
-- Stride calculation.
-- Multidimensional element access.
-- Flat indexing.
+- Multidimensional indexing.
+- Element access using `at()` and `operator()`.
+- Flat indexing using `flat_at()`.
 - Tensor reshaping.
 
-### Phase 3 – Mathematical Operations
-- Element-wise addition.
-- Element-wise subtraction.
-- Element-wise multiplication.
+### 3. Mathematical Operations
+- Elementwise addition.
+- Elementwise subtraction.
+- Elementwise multiplication.
 - Matrix multiplication.
-- OpenMP-based parallel matrix multiplication.
-- Hybrid sequential and parallel execution.
+- Sequential and OpenMP-parallel operations.
 
-### Phase 4 – Advanced Tensor Operations
-- Tensor transpose.
-- Broadcasting addition.
-- Broadcasting subtraction.
-- Broadcasting multiplication.
+### 4. Advanced Tensor Operations
+- Matrix transpose.
+- Broadcasting.
 - Sum reduction.
 - Mean reduction.
 - Minimum reduction.
 - Maximum reduction.
 
-### Phase 5 – Performance Optimization and Parallel Computing
-Several matrix multiplication implementations were developed and benchmarked:
+### 5. Performance Optimization
+- SIMD vectorization.
+- OpenMP parallel computing.
+- Blocked matrix multiplication.
+- Parallel blocked matrix multiplication.
+- Blocked matrix transpose.
+- Optimized broadcasting paths.
+- Native CPU optimization.
+- Link Time Optimization (LTO).
 
-1. **Normal Sequential:** Uses an optimized `i-k-j` loop order.
-2. **OpenMP:** Parallelizes matrix multiplication across rows.
-3. **Hybrid:** Selects sequential or parallel execution based on workload.
-4. **Blocked Matrix Multiplication:** Divides matrices into smaller blocks to improve cache utilization.
-5. **Parallel-Blocked Matrix Multiplication:** Combines cache blocking with OpenMP parallelization.
+### 6. Testing and Application
+- Six test suites covering Phases 1–6.
+- Tensor Playground interactive application.
+- Performance benchmarks for different operations.
+- Correctness testing across tensor shapes and operations.
 
-## Performance Benchmarks
-
-Matrix multiplication implementations were compared using different matrix sizes and block sizes.
-
-### Latest Benchmark Results
-
-| Matrix Size | Normal Sequential | OpenMP | Hybrid | Parallel-Blocked (Best) |
-|---|---:|---:|---:|---:|
-| 64 × 64 | 0.040 ms | 0.079 ms | 0.040 ms | 0.097 ms |
-| 128 × 128 | 0.502 ms | 0.264 ms | 0.669 ms | 0.303 ms |
-| 256 × 256 | 3.491 ms | 0.947 ms | 0.997 ms | 0.931 ms |
-| 512 × 512 | 26.154 ms | 6.468 ms | 6.031 ms | 6.658 ms |
-| 1024 × 1024 | 211.100 ms | 40.512 ms | 45.874 ms | 37.092 ms |
-
-### Best Performance Achieved
-
-For a 1024 × 1024 matrix:
-
-| Metric | Result |
-|---|---:|
-| Normal sequential runtime | 211.100 ms |
-| Parallel-blocked runtime | 37.092 ms |
-| Execution time saved | 174.008 ms |
-| Runtime reduction | 82.43% |
-| Speedup | 5.691× |
-
-### Block Size Experiments
-
-Different block sizes were tested to identify their impact on performance.
-
-| Matrix Size | Best Sequential Block Size | Best Parallel Block Size |
-|---|---:|---:|
-| 64 × 64 | 64 | 16 |
-| 128 × 128 | 128 | 32 |
-| 256 × 256 | 64 | 32 |
-| 512 × 512 | 64 | 32 |
-| 1024 × 1024 | 64 | 64 |
-
-**Observation:** Parallel-blocked multiplication achieved the best measured runtime for the 256 × 256 and 1024 × 1024 matrices. Hybrid multiplication performed best at 512 × 512. The optimal block size varied with matrix dimensions.
-
-*Benchmark results are machine-dependent and may vary with CPU, compiler, OpenMP thread count, and system load.*
-
-All benchmark implementations produced matching results within the configured numerical tolerance. The global checksum was `30621314642.990`.
+---
 
 ## Project Structure
 
 ```text
-MiniTensor_Phase1/
+MiniTensor/
 │
 ├── include/
 │   └── minitensor/
@@ -119,90 +82,288 @@ MiniTensor_Phase1/
 │   ├── test_phase2.cpp
 │   ├── test_phase3.cpp
 │   ├── test_phase4.cpp
-│   └── test_phase5.cpp
+│   ├── test_phase5.cpp
+│   └── test_phase6.cpp
 │
 ├── benchmarks/
 │   ├── benchmark_phase1.cpp
 │   ├── benchmark_v2.cpp
-│   └── benchmark_matmul.cpp
+│   ├── benchmark_matmul.cpp
+│   ├── benchmark_elementwise.cpp
+│   ├── benchmark_transpose.cpp
+│   ├── benchmark_broadcast.cpp
+│   ├── benchmark_broadcast_v2.cpp
+│   └── benchmark_broadcast_v3.cpp
 │
 ├── examples/
-│   └── main.cpp
+│   ├── main.cpp
+│   └── tensor_application.cpp
+│
+├── cmake/
+│   └── MiniTensorConfig.cmake.in
 │
 ├── CMakeLists.txt
 └── README.md
 ```
 
-## Technologies Used
+---
 
-- **Language:** C++
-- **Build System:** CMake
-- **Compiler:** GCC
-- **Parallel Computing:** OpenMP
-- **Version Control:** Git and GitHub
-- **Development Environment:** Visual Studio Code
-
-## Build Instructions
-
-### Prerequisites
+## Requirements
 
 - C++17 compatible compiler.
-- CMake.
-- OpenMP support.
-- Git.
+- CMake 3.16 or newer.
+- GCC or Clang (MSVC may also be supported).
+- OpenMP development support.
 
-### 1. Clone the Repository
+Tested development environment:
+
+- Windows 11
+- MSYS2 GCC 16.1.0
+- CMake
+- VS Code
+- AMD Ryzen AI 7 350 processor
+
+---
+
+## Building the Project
+
+### Windows (MinGW)
+
+Clone the repository:
 
 ```bash
 git clone https://github.com/manmeetmanchanda10016/Diwali-Project.git
-cd Diwali-Project
+cd MiniTensor_Phase1
 ```
 
-### 2. Configure the Project
+Configure the Release build:
 
-```bash
-cmake -S . -B build-release -DCMAKE_BUILD_TYPE=Release
+```powershell
+cmake -S . -B build-release -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release -DMINITENSOR_ENABLE_NATIVE=ON -DMINITENSOR_ENABLE_LTO=ON
 ```
 
-### 3. Build the Library
+Build:
 
-```bash
+```powershell
 cmake --build build-release -j
 ```
 
-### 4. Run Tests
+### Linux (GCC)
+
+Install the required build tools and OpenMP support.
+
+```bash
+sudo apt update
+sudo apt install build-essential cmake libgomp1
+```
+
+Configure:
+
+```bash
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+```
+
+Build:
+
+```bash
+cmake --build build -j
+```
+
+---
+
+## Running Tests
+
+MiniTensor uses CTest for automated testing.
 
 ```bash
 ctest --test-dir build-release --output-on-failure
 ```
 
-### 5. Run the Matrix Multiplication Benchmark
+The six test suites cover:
 
-```bash
-./build-release/benchmark_matmul
-```
+| Test suite | Coverage |
+|---|---|
+| Phase 1 | Tensor representation and storage |
+| Phase 2 | Indexing and reshaping |
+| Phase 3 | Mathematical operations |
+| Phase 4 | Broadcasting and reductions |
+| Phase 5 | Performance-oriented operations |
+| Phase 6 | Edge cases and application correctness |
 
-On Windows PowerShell:
+---
+
+## Running the Examples
+
+Run the basic example:
 
 ```powershell
-.\build-release\benchmark_matmul.exe
+.\build-release\basic_example.exe
 ```
 
-## Testing
+Run the interactive Tensor Playground:
 
-Five test suites have been implemented:
+```powershell
+.\build-release\tensor_application.exe
+```
 
-| Test Suite | Coverage |
+The Tensor Playground provides menu-driven access to:
+
+- Tensor creation and management.
+- Element access and modification.
+- Arithmetic operations.
+- Broadcasting.
+- Matrix multiplication.
+- Transpose.
+- Tensor reductions.
+
+Run interactive applications in a terminal that supports standard input.
+
+---
+
+## Using MiniTensor
+
+Include the required headers:
+
+```cpp
+#include "minitensor/Tensor.h"
+#include "minitensor/Ops.h"
+
+#include <iostream>
+
+using namespace minitensor;
+
+int main()
+{
+    Tensor a({2, 3});
+    Tensor b({2, 3});
+
+    a.fill(5.0);
+    b.fill(2.0);
+
+    Tensor result = add(a, b);
+
+    std::cout << "Result:\n";
+
+    for (std::size_t i = 0; i < result.size(); i++)
+    {
+        std::cout << result.flat_at(i) << " ";
+    }
+
+    return 0;
+}
+```
+
+Expected output:
+
+```text
+Result:
+7 7 7 7 7 7
+```
+
+### Matrix Multiplication
+
+```cpp
+Tensor a({2, 3});
+Tensor b({3, 2});
+
+Tensor result = matmul(a, b);
+```
+
+### Broadcasting
+
+```cpp
+Tensor a({2, 3});
+Tensor b({3});
+
+Tensor result = add_broadcast(a, b);
+```
+
+### Transpose
+
+```cpp
+Tensor a({2, 3});
+
+Tensor result = transpose(a);
+```
+
+### Reductions
+
+```cpp
+double total = sum(a);
+double average = mean(a);
+double minimum = min(a);
+double maximum = max(a);
+```
+
+---
+
+## Installation
+
+MiniTensor supports CMake installation.
+
+After configuring and building:
+
+```powershell
+cmake --install build-release --prefix install
+```
+
+The installation directory contains:
+
+```text
+install/
+├── include/
+│   └── minitensor/
+│       ├── Shape.h
+│       ├── Storage.h
+│       ├── Tensor.h
+│       └── Ops.h
+│
+└── lib/
+    ├── libminitensor.a
+    └── cmake/
+        └── MiniTensor/
+```
+
+The exported CMake package provides the target:
+
+```cmake
+MiniTensor::minitensor
+```
+
+---
+
+## Performance Optimization
+
+MiniTensor incorporates several optimization techniques:
+
+| Optimization | Purpose |
 |---|---|
-| Phase 1 | Tensor creation and memory management |
-| Phase 2 | Indexing, strides and reshaping |
-| Phase 3 | Mathematical operations and matrix multiplication |
-| Phase 4 | Broadcasting, transpose and reductions |
-| Phase 5 | Matrix multiplication correctness and parallel consistency |
+| 64-byte aligned memory | Improve memory alignment |
+| SIMD | Process multiple elements per instruction |
+| OpenMP | Parallelize computational workloads |
+| Blocked matrix multiplication | Improve cache utilization |
+| Blocked transpose | Improve memory access locality |
+| Native CPU optimization | Enable processor-specific instructions |
+| Link Time Optimization | Optimize across translation units |
 
-**Latest validation:** All 5 test suites passed successfully.
+### Benchmark Highlights
 
-## Development Roadmap
+Measurements from the development system (AMD Ryzen AI 7 350):
+
+| Operation | Input size | Observed result |
+|---|---:|---|
+| Matrix multiplication | 128 × 128 | Up to 2.63× speedup |
+| Matrix multiplication | 256 × 256 | Up to 3.36× speedup |
+| Matrix multiplication | 1024 × 1024 | Up to 3.80× speedup |
+| Transpose | 256 × 256 | Up to 3.62× speedup |
+| Transpose | 1024 × 1024 | Up to 2.33× speedup |
+| Transpose | 2048 × 2048 | Up to 2.58× speedup |
+
+Speedups compare the optimized implementation against its corresponding sequential baseline in the development benchmarks. Results depend on hardware, compiler, and workload.
+
+---
+
+## Development Phases
 
 | Phase | Description | Status |
 |---|---|---|
@@ -211,22 +372,46 @@ Five test suites have been implemented:
 | Phase 3 | Mathematical operations | Completed |
 | Phase 4 | Advanced tensor operations | Completed |
 | Phase 5 | Performance optimization and parallel computing | Completed |
-| Phase 6 | Testing and application development | Upcoming |
-| Phase 7 | Packaging, documentation and public release | Upcoming |
-
-## Future Improvements
-
-- Additional edge-case and stress testing.
-- Practical tensor-based applications.
-- Cross-platform validation on Linux.
-- Further performance optimization.
-- Improved API documentation.
-- Packaging and public release.
-
-## Contributors
-
-Developed as a team project for the **Diwali 2026 Challenge**.
+| Phase 6 | Testing and application development | Completed |
+| Phase 7 | Packaging, documentation and public release | In progress |
 
 ---
 
-**Project Goal:** Build a reusable, efficient, and lightweight C++ tensor library while exploring memory management, data structures, algorithm optimization, and parallel computing.
+## Future Improvements
+
+Potential future enhancements include:
+
+- Additional tensor operations.
+- More advanced SIMD optimizations.
+- Improved parallel scheduling.
+- Expanded benchmarking across different processors.
+- Additional examples and documentation.
+- Linux and cross-platform build verification.
+
+---
+
+## Contributing
+
+Contributions, suggestions, and performance improvements are welcome.
+
+1. Fork the repository.
+2. Create a new branch.
+3. Make your changes.
+4. Run the test suite.
+5. Submit a pull request.
+
+---
+
+## License
+
+A license has not yet been selected for this project. Check the repository for licensing information before reusing or distributing the code.
+
+---
+
+## Author
+
+**MiniTensor — A C++17 Multidimensional Tensor Library**
+
+GitHub Repository:
+
+https://github.com/manmeetmanchanda10016/Diwali-Project
