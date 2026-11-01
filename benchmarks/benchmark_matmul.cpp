@@ -3,22 +3,39 @@
 
 #include <algorithm>
 #include <chrono>
+#include <cmath>
 #include <iomanip>
 #include <iostream>
-#include <vector>
 #include <stdexcept>
-#include <cmath>
+#include <string>
+#include <vector>
 
 using namespace minitensor;
-using namespace std;
-using namespace chrono;
+using Clock = std::chrono::steady_clock;
 
-// Normal matrix multiplication (baseline)
+// Original sequential i-k-j matrix multiplication
 Tensor normal_matmul(const Tensor& a, const Tensor& b)
 {
-    const size_t rows = a.shape().dimensions()[0];
-    const size_t inner = a.shape().dimensions()[1];
-    const size_t cols = b.shape().dimensions()[1];
+    if (a.rank() != 2 || b.rank() != 2)
+    {
+        throw std::invalid_argument(
+            "Matrix multiplication requires 2D tensors"
+        );
+    }
+
+    const auto& a_shape = a.shape().dimensions();
+    const auto& b_shape = b.shape().dimensions();
+
+    const std::size_t rows = a_shape[0];
+    const std::size_t inner = a_shape[1];
+    const std::size_t cols = b_shape[1];
+
+    if (inner != b_shape[0])
+    {
+        throw std::invalid_argument(
+            "Incompatible matrix dimensions"
+        );
+    }
 
     Tensor result({rows, cols}, 0.0);
 
@@ -26,13 +43,13 @@ Tensor normal_matmul(const Tensor& a, const Tensor& b)
     const double* B = b.data();
     double* C = result.data();
 
-    for (size_t i = 0; i < rows; ++i)
+    for (std::size_t i = 0; i < rows; ++i)
     {
-        for (size_t k = 0; k < inner; ++k)
+        for (std::size_t k = 0; k < inner; ++k)
         {
-            double value = A[i * inner + k];
+            const double value = A[i * inner + k];
 
-            for (size_t j = 0; j < cols; ++j)
+            for (std::size_t j = 0; j < cols; ++j)
             {
                 C[i * cols + j] +=
                     value * B[k * cols + j];
@@ -43,184 +60,278 @@ Tensor normal_matmul(const Tensor& a, const Tensor& b)
     return result;
 }
 
-// Blocked matrix multiplication
-Tensor blocked_matmul(const Tensor& a, const Tensor& b)
+// Generate nonuniform matrices
+Tensor create_matrix(
+    std::size_t rows,
+    std::size_t cols,
+    double seed)
 {
-    const size_t rows = a.shape().dimensions()[0];
-    const size_t inner = a.shape().dimensions()[1];
-    const size_t cols = b.shape().dimensions()[1];
+    Tensor result({rows, cols});
 
-    constexpr size_t BLOCK_SIZE = 32;
-
-    Tensor result({rows, cols}, 0.0);
-
-    const double* A = a.data();
-    const double* B = b.data();
-    double* C = result.data();
-
-    for (size_t ii = 0; ii < rows; ii += BLOCK_SIZE)
+    for (std::size_t i = 0; i < rows; ++i)
     {
-        for (size_t kk = 0; kk < inner; kk += BLOCK_SIZE)
+        for (std::size_t j = 0; j < cols; ++j)
         {
-            for (size_t jj = 0; jj < cols; jj += BLOCK_SIZE)
-            {
-                const size_t i_end = min(ii + BLOCK_SIZE, rows);
-                const size_t k_end = min(kk + BLOCK_SIZE, inner);
-                const size_t j_end = min(jj + BLOCK_SIZE, cols);
-
-                for (size_t i = ii; i < i_end; ++i)
-                {
-                    for (size_t k = kk; k < k_end; ++k)
-                    {
-                        const double value = A[i * inner + k];
-
-                        for (size_t j = jj; j < j_end; ++j)
-                        {
-                            C[i * cols + j] +=
-                                value * B[k * cols + j];
-                        }
-                    }
-                }
-            }
+            result.flat_at(i * cols + j) =
+                std::fmod(seed + i * 0.17 + j * 0.31, 10.0);
         }
     }
 
     return result;
 }
 
-// Benchmark function
-template <typename Function>
-double benchmark(Function function, double& checksum)
+// Compare two tensor results
+bool compare_results(
+    const Tensor& a,
+    const Tensor& b,
+    double tolerance = 1e-8)
 {
-    vector<double> times;
-
-    // Warm-up
-    for (int i = 0; i < 3; ++i)
+    if (a.shape().dimensions() != b.shape().dimensions())
     {
-        Tensor result = function();
-
-        checksum += result.data()[0];
-        checksum += result.data()[result.size() - 1];
+        return false;
     }
 
-    // Measurements
-    for (int i = 0; i < 7; ++i)
+    for (std::size_t i = 0; i < a.size(); ++i)
     {
-        auto start = steady_clock::now();
+        if (std::abs(a.flat_at(i) - b.flat_at(i)) > tolerance)
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+// Measure median execution time
+template <typename Function>
+double measure(
+    Function function,
+    int warmups = 3,
+    int measurements = 9)
+{
+    for (int i = 0; i < warmups; ++i)
+    {
+        Tensor result = function();
+
+        volatile double check =
+            result.size() > 0 ? result.flat_at(0) : 0.0;
+
+        (void)check;
+    }
+
+    std::vector<double> times;
+    times.reserve(measurements);
+
+    for (int i = 0; i < measurements; ++i)
+    {
+        const auto start = Clock::now();
 
         Tensor result = function();
 
-        auto end = steady_clock::now();
+        const auto end = Clock::now();
 
-        double elapsed =
-            duration<double, milli>(end - start).count();
+        volatile double check =
+            result.size() > 0 ? result.flat_at(0) : 0.0;
+
+        (void)check;
+
+        const double elapsed =
+            std::chrono::duration<double, std::milli>(
+                end - start
+            ).count();
 
         times.push_back(elapsed);
-
-        checksum += result.data()[0];
-        checksum += result.data()[result.size() - 1];
     }
 
-    sort(times.begin(), times.end());
+    std::sort(times.begin(), times.end());
 
     return times[times.size() / 2];
 }
 
-// Verify multiplication results
-void verify_result(const Tensor& result, size_t n)
-{
-    const double expected = 2.0 * static_cast<double>(n);
-
-    for (size_t i = 0; i < result.size(); ++i)
-    {
-        if (abs(result.data()[i] - expected) > 1e-9)
-        {
-            throw runtime_error(
-                "Matrix multiplication produced an incorrect result"
-            );
-        }
-    }
-}
-
 int main()
 {
-    cout << fixed << setprecision(3);
-
-    vector<size_t> sizes = {
+    const std::vector<std::size_t> sizes = {
         64, 128, 256, 512, 1024
     };
 
+    const std::vector<std::size_t> block_sizes = {
+        16, 32, 64, 128
+    };
+
+    constexpr int warmups = 3;
+    constexpr int measurements = 9;
+
     double global_checksum = 0.0;
 
-    cout << "\nMATRIX MULTIPLICATION BENCHMARK\n";
-    cout << "============================================\n";
-    cout << "Warmups: 3 | Measurements: 7 | Statistic: Median\n";
+    std::cout << "\nMATRIX MULTIPLICATION BENCHMARK\n";
+    std::cout << "============================================\n";
 
-    for (size_t n : sizes)
+    std::cout << "Warmups: " << warmups
+              << " | Measurements: " << measurements
+              << " | Statistic: Median\n";
+
+    for (const std::size_t n : sizes)
     {
-        Tensor a({n, n});
-        Tensor b({n, n});
+        std::cout << "\n--------------------------------------------\n";
+        std::cout << "Matrix size: " << n << " x " << n << "\n";
+        std::cout << "--------------------------------------------\n";
 
-        for (size_t i = 0; i < n * n; ++i)
+        Tensor a = create_matrix(n, n, 1.0);
+        Tensor b = create_matrix(n, n, 2.0);
+
+        // Sequential reference
+        Tensor reference = normal_matmul(a, b);
+
+        // Correctness checks
+        if (!compare_results(reference, matmul(a, b)) ||
+            !compare_results(reference, matmul_parallel(a, b)))
         {
-            a.data()[i] = 1.0;
-            b.data()[i] = 2.0;
+            throw std::runtime_error(
+                "Normal, OpenMP or hybrid correctness check failed"
+            );
         }
 
-        cout << "\n--------------------------------------------\n";
-        cout << "Matrix size: " << n << " x " << n << '\n';
-        cout << "--------------------------------------------\n";
-
-        // Verify all implementations before benchmarking
-        verify_result(normal_matmul(a, b), n);
-        verify_result(blocked_matmul(a, b), n);
-        verify_result(matmul_parallel(a, b), n);
-        verify_result(matmul(a, b), n);
-
-        double checksum = 0.0;
-
-        double normal_time = benchmark(
+        const double normal_time = measure(
             [&]() { return normal_matmul(a, b); },
-            checksum
+            warmups,
+            measurements
         );
 
-        double blocked_time = benchmark(
-            [&]() { return blocked_matmul(a, b); },
-            checksum
-        );
-
-        double parallel_time = benchmark(
+        const double parallel_time = measure(
             [&]() { return matmul_parallel(a, b); },
-            checksum
+            warmups,
+            measurements
         );
 
-        // This calls the actual library hybrid implementation
-        double hybrid_time = benchmark(
+        const double hybrid_time = measure(
             [&]() { return matmul(a, b); },
-            checksum
+            warmups,
+            measurements
         );
 
-        cout << "\nNormal:          " << normal_time << " ms\n";
-        cout << "Blocked:         " << blocked_time << " ms\n";
-        cout << "OpenMP:          " << parallel_time << " ms\n";
-        cout << "Library Hybrid:  " << hybrid_time << " ms\n";
+        double best_blocked_time = 0.0;
+        double best_parallel_blocked_time = 0.0;
 
-        cout << "\nSpeedup compared with normal:\n";
+        std::size_t best_blocked_size = 0;
+        std::size_t best_parallel_blocked_size = 0;
 
-        cout << "Blocked:         "
-             << normal_time / blocked_time << "x\n";
+        std::cout << "\nBlocked experiments:\n";
 
-        cout << "OpenMP:          "
-             << normal_time / parallel_time << "x\n";
+        for (const std::size_t block_size : block_sizes)
+        {
+            const double blocked_time = measure(
+                [&]()
+                {
+                    return matmul_blocked(a, b, block_size);
+                },
+                warmups,
+                measurements
+            );
 
-        cout << "Library Hybrid:  "
-             << normal_time / hybrid_time << "x\n";
+            const double parallel_blocked_time = measure(
+                [&]()
+                {
+                    return matmul_parallel_blocked(
+                        a, b, block_size
+                    );
+                },
+                warmups,
+                measurements
+            );
 
-        global_checksum += checksum;
+            Tensor blocked_result =
+                matmul_blocked(a, b, block_size);
+
+            Tensor parallel_blocked_result =
+                matmul_parallel_blocked(a, b, block_size);
+
+            if (!compare_results(reference, blocked_result) ||
+                !compare_results(reference, parallel_blocked_result))
+            {
+                throw std::runtime_error(
+                    "Blocked multiplication correctness check failed"
+                );
+            }
+
+            std::cout << "Block " << std::setw(3) << block_size
+                      << " | Blocked: "
+                      << std::fixed << std::setprecision(3)
+                      << blocked_time << " ms"
+                      << " | Parallel-blocked: "
+                      << parallel_blocked_time << " ms\n";
+
+            if (best_blocked_size == 0 ||
+                blocked_time < best_blocked_time)
+            {
+                best_blocked_time = blocked_time;
+                best_blocked_size = block_size;
+            }
+
+            if (best_parallel_blocked_size == 0 ||
+                parallel_blocked_time < best_parallel_blocked_time)
+            {
+                best_parallel_blocked_time = parallel_blocked_time;
+                best_parallel_blocked_size = block_size;
+            }
+        }
+
+        std::cout << "\nPerformance Results:\n";
+
+        auto print_result = [](
+            const std::string& name,
+            double time)
+        {
+            std::cout << std::left << std::setw(25)
+                      << name
+                      << std::right << std::fixed
+                      << std::setprecision(3)
+                      << time << " ms\n";
+        };
+
+        print_result("Normal sequential", normal_time);
+        print_result("OpenMP", parallel_time);
+        print_result("Hybrid", hybrid_time);
+        print_result("Best blocked", best_blocked_time);
+        print_result(
+            "Best parallel-blocked",
+            best_parallel_blocked_time
+        );
+
+        std::cout << "\nBest block sizes:\n";
+        std::cout << "Blocked: "
+                  << best_blocked_size << '\n';
+
+        std::cout << "Parallel-blocked: "
+                  << best_parallel_blocked_size << '\n';
+
+        std::cout << "\nSpeedup compared with normal:\n";
+
+        std::cout << "OpenMP: "
+                  << normal_time / parallel_time << "x\n";
+
+        std::cout << "Hybrid: "
+                  << normal_time / hybrid_time << "x\n";
+
+        std::cout << "Best blocked: "
+                  << normal_time / best_blocked_time << "x\n";
+
+        std::cout << "Best parallel-blocked: "
+                  << normal_time / best_parallel_blocked_time << "x\n";
+
+        for (std::size_t i = 0; i < reference.size(); ++i)
+        {
+            global_checksum += reference.flat_at(i);
+        }
     }
 
-    cout << "\n============================================\n";
-    cout << "Global checksum: " << global_checksum << '\n';
+    std::cout << "\n============================================\n";
+
+    std::cout << "Global checksum: "
+              << std::fixed << std::setprecision(3)
+              << global_checksum << '\n';
+
+    std::cout << "All correctness checks passed.\n";
+    std::cout << "Benchmark completed successfully.\n";
 
     return 0;
 }

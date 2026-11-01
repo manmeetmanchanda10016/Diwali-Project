@@ -1,6 +1,6 @@
-
 #include "minitensor/Ops.h"
 
+#include <algorithm>
 #include <omp.h>
 #include <stdexcept>
 #include <vector>
@@ -10,7 +10,6 @@ namespace minitensor {
 
 namespace {
 
-// Validate identical shapes for normal element-wise operations
 void validate_same_shape(const Tensor& a, const Tensor& b)
 {
     if (a.shape().dimensions() != b.shape().dimensions())
@@ -21,7 +20,6 @@ void validate_same_shape(const Tensor& a, const Tensor& b)
     }
 }
 
-// Calculate the broadcast-compatible output shape
 std::vector<std::size_t> broadcast_shape(
     const Tensor& a,
     const Tensor& b)
@@ -71,7 +69,6 @@ std::vector<std::size_t> broadcast_shape(
     return result;
 }
 
-// Calculate the input offset for a broadcasted output element
 std::size_t broadcast_offset(
     std::size_t flat_index,
     const std::vector<std::size_t>& output_shape,
@@ -107,7 +104,6 @@ std::size_t broadcast_offset(
     return offset;
 }
 
-// Generic broadcasting operation
 template <typename Operation>
 Tensor broadcast_operation(
     const Tensor& a,
@@ -340,6 +336,168 @@ Tensor matmul_parallel(const Tensor& a, const Tensor& b)
     return result;
 }
 
+// Cache-blocked matrix multiplication
+Tensor matmul_blocked(
+    const Tensor& a,
+    const Tensor& b,
+    std::size_t block_size)
+{
+    if (a.rank() != 2 || b.rank() != 2)
+    {
+        throw std::invalid_argument(
+            "Matrix multiplication requires 2D tensors"
+        );
+    }
+
+    const auto& a_shape = a.shape().dimensions();
+    const auto& b_shape = b.shape().dimensions();
+
+    const std::size_t rows_a = a_shape[0];
+    const std::size_t cols_a = a_shape[1];
+    const std::size_t rows_b = b_shape[0];
+    const std::size_t cols_b = b_shape[1];
+
+    if (cols_a != rows_b)
+    {
+        throw std::invalid_argument(
+            "Matrix dimensions are incompatible for multiplication"
+        );
+    }
+
+    if (block_size == 0)
+    {
+        throw std::invalid_argument(
+            "Block size cannot be zero"
+        );
+    }
+
+    Tensor result({rows_a, cols_b}, 0.0);
+
+    const double* A = a.data();
+    const double* B = b.data();
+    double* C = result.data();
+
+    for (std::size_t ii = 0; ii < rows_a; ii += block_size)
+    {
+        for (std::size_t jj = 0; jj < cols_b; jj += block_size)
+        {
+            for (std::size_t kk = 0; kk < cols_a; kk += block_size)
+            {
+                const std::size_t i_end =
+                    ii + std::min(block_size, rows_a - ii);
+
+                const std::size_t j_end =
+                    jj + std::min(block_size, cols_b - jj);
+
+                const std::size_t k_end =
+                    kk + std::min(block_size, cols_a - kk);
+
+                for (std::size_t i = ii; i < i_end; ++i)
+                {
+                    for (std::size_t k = kk; k < k_end; ++k)
+                    {
+                        const double value = A[i * cols_a + k];
+
+                        for (std::size_t j = jj; j < j_end; ++j)
+                        {
+                            C[i * cols_b + j] +=
+                                value * B[k * cols_b + j];
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    return result;
+}
+
+// Parallel cache-blocked matrix multiplication
+Tensor matmul_parallel_blocked(
+    const Tensor& a,
+    const Tensor& b,
+    std::size_t block_size)
+{
+    if (a.rank() != 2 || b.rank() != 2)
+    {
+        throw std::invalid_argument(
+            "Matrix multiplication requires 2D tensors"
+        );
+    }
+
+    const auto& a_shape = a.shape().dimensions();
+    const auto& b_shape = b.shape().dimensions();
+
+    const std::size_t rows_a = a_shape[0];
+    const std::size_t cols_a = a_shape[1];
+    const std::size_t rows_b = b_shape[0];
+    const std::size_t cols_b = b_shape[1];
+
+    if (cols_a != rows_b)
+    {
+        throw std::invalid_argument(
+            "Matrix dimensions are incompatible for multiplication"
+        );
+    }
+
+    if (block_size == 0)
+    {
+        throw std::invalid_argument(
+            "Block size cannot be zero"
+        );
+    }
+
+    Tensor result({rows_a, cols_b}, 0.0);
+
+    const double* A = a.data();
+    const double* B = b.data();
+    double* C = result.data();
+
+    const std::size_t row_blocks =
+        rows_a / block_size +
+        (rows_a % block_size != 0);
+
+    #pragma omp parallel for schedule(static)
+    for (long long block_i = 0;
+         block_i < static_cast<long long>(row_blocks);
+         ++block_i)
+    {
+        const std::size_t ii =
+            static_cast<std::size_t>(block_i) * block_size;
+
+        const std::size_t i_end =
+            ii + std::min(block_size, rows_a - ii);
+
+        for (std::size_t jj = 0; jj < cols_b; jj += block_size)
+        {
+            for (std::size_t kk = 0; kk < cols_a; kk += block_size)
+            {
+                const std::size_t j_end =
+                    jj + std::min(block_size, cols_b - jj);
+
+                const std::size_t k_end =
+                    kk + std::min(block_size, cols_a - kk);
+
+                for (std::size_t i = ii; i < i_end; ++i)
+                {
+                    for (std::size_t k = kk; k < k_end; ++k)
+                    {
+                        const double value = A[i * cols_a + k];
+
+                        for (std::size_t j = jj; j < j_end; ++j)
+                        {
+                            C[i * cols_b + j] +=
+                                value * B[k * cols_b + j];
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    return result;
+}
+
 // Tensor transpose
 Tensor transpose(const Tensor& a)
 {
@@ -389,8 +547,7 @@ Tensor operator*(const Tensor& a, const Tensor& b)
     return multiply(a, b);
 }
 
-// Phase 4: Reduction Operations
-
+// Sum reduction
 double sum(const Tensor& a)
 {
     double result = 0.0;
@@ -405,6 +562,7 @@ double sum(const Tensor& a)
     return result;
 }
 
+// Mean reduction
 double mean(const Tensor& a)
 {
     if (a.size() == 0)
@@ -417,6 +575,7 @@ double mean(const Tensor& a)
     return sum(a) / static_cast<double>(a.size());
 }
 
+// Minimum reduction
 double min(const Tensor& a)
 {
     if (a.size() == 0)
@@ -440,6 +599,7 @@ double min(const Tensor& a)
     return result;
 }
 
+// Maximum reduction
 double max(const Tensor& a)
 {
     if (a.size() == 0)
