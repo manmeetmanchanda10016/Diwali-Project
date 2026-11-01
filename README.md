@@ -1,10 +1,25 @@
 # MiniTensor
 
-**A lightweight, high-performance multidimensional tensor library written in C++17.**
+**A Lightweight, High-Performance Multidimensional Tensor Library Built from Scratch in C++17.**
 
-MiniTensor is a custom tensor library built from scratch in C++. It provides multidimensional tensor storage, indexing, mathematical operations, broadcasting, matrix multiplication, reductions, and performance optimizations using SIMD and OpenMP.
+MiniTensor is a custom tensor library developed in C++17. It provides multidimensional tensor storage, indexing, mathematical operations, broadcasting, matrix multiplication, reductions, and performance optimizations using SIMD and OpenMP.
 
 The project focuses on efficient memory management, contiguous storage, optimized numerical operations, and a clean C++ interface.
+
+<details>
+<summary>Project highlights</summary>
+
+- Custom 64-byte aligned memory allocation.
+- Multidimensional tensor creation and indexing.
+- Elementwise mathematical operations.
+- Broadcasting and matrix multiplication.
+- SIMD vectorization and OpenMP parallelization.
+- Cache-blocked matrix multiplication and transpose.
+- CMake-based installation and packaging.
+- Six automated test suites.
+- Interactive Tensor Playground.
+
+</details>
 
 ---
 
@@ -52,7 +67,7 @@ The project focuses on efficient memory management, contiguous storage, optimize
 - Link Time Optimization (LTO).
 
 ### 6. Testing and Application
-- Six test suites covering Phases 1–6.
+- Six automated test suites.
 - Tensor Playground interactive application.
 - Performance benchmarks for different operations.
 - Correctness testing across tensor shapes and operations.
@@ -103,6 +118,7 @@ MiniTensor/
 │   └── MiniTensorConfig.cmake.in
 │
 ├── CMakeLists.txt
+├── LICENSE
 └── README.md
 ```
 
@@ -112,15 +128,15 @@ MiniTensor/
 
 - C++17 compatible compiler.
 - CMake 3.16 or newer.
-- GCC or Clang (MSVC may also be supported).
+- GCC, Clang, or MSVC with suitable C++17 and OpenMP support.
 - OpenMP development support.
 
-Tested development environment:
+### Tested Development Environment
 
 - Windows 11
 - MSYS2 GCC 16.1.0
 - CMake
-- VS Code
+- Visual Studio Code
 - AMD Ryzen AI 7 350 processor
 
 ---
@@ -133,7 +149,7 @@ Clone the repository:
 
 ```bash
 git clone https://github.com/manmeetmanchanda10016/Diwali-Project.git
-cd MiniTensor_Phase1
+cd Diwali-Project
 ```
 
 Configure the Release build:
@@ -150,11 +166,11 @@ cmake --build build-release -j
 
 ### Linux (GCC)
 
-Install the required build tools and OpenMP support.
+Install the required development tools:
 
 ```bash
 sudo apt update
-sudo apt install build-essential cmake libgomp1
+sudo apt install build-essential cmake libomp-dev
 ```
 
 Configure:
@@ -175,13 +191,21 @@ cmake --build build -j
 
 MiniTensor uses CTest for automated testing.
 
-```bash
+Windows:
+
+```powershell
 ctest --test-dir build-release --output-on-failure
 ```
 
-The six test suites cover:
+Linux:
 
-| Test suite | Coverage |
+```bash
+ctest --test-dir build --output-on-failure
+```
+
+### Test Coverage
+
+| Test Suite | Coverage |
 |---|---|
 | Phase 1 | Tensor representation and storage |
 | Phase 2 | Indexing and reshaping |
@@ -190,20 +214,38 @@ The six test suites cover:
 | Phase 5 | Performance-oriented operations |
 | Phase 6 | Edge cases and application correctness |
 
+**Latest recorded test result: 6/6 test suites passed.**
+
 ---
 
 ## Running the Examples
 
-Run the basic example:
+### Basic Example
+
+Windows:
 
 ```powershell
 .\build-release\basic_example.exe
 ```
 
-Run the interactive Tensor Playground:
+Linux:
+
+```bash
+./build/basic_example
+```
+
+### Interactive Tensor Playground
+
+Windows:
 
 ```powershell
 .\build-release\tensor_application.exe
+```
+
+Linux:
+
+```bash
+./build/tensor_application
 ```
 
 The Tensor Playground provides menu-driven access to:
@@ -213,7 +255,7 @@ The Tensor Playground provides menu-driven access to:
 - Arithmetic operations.
 - Broadcasting.
 - Matrix multiplication.
-- Transpose.
+- Matrix transpose.
 - Tensor reductions.
 
 Run interactive applications in a terminal that supports standard input.
@@ -297,11 +339,15 @@ double maximum = max(a);
 
 ---
 
-## Installation
+## Installation and Packaging
 
-MiniTensor supports CMake installation.
+MiniTensor supports CMake installation and exports the target:
 
-After configuring and building:
+`MiniTensor::minitensor`
+
+Configure and build the project first.
+
+Install:
 
 ```powershell
 cmake --install build-release --prefix install
@@ -322,12 +368,27 @@ install/
     ├── libminitensor.a
     └── cmake/
         └── MiniTensor/
+            ├── MiniTensorTargets.cmake
+            ├── MiniTensorConfig.cmake
+            └── MiniTensorConfigVersion.cmake
 ```
 
-The exported CMake package provides the target:
+### Using the Installed Package
+
+In another CMake project:
 
 ```cmake
-MiniTensor::minitensor
+find_package(MiniTensor REQUIRED)
+
+target_link_libraries(my_app
+    PRIVATE MiniTensor::minitensor
+)
+```
+
+Configure the external project with the installation prefix:
+
+```powershell
+cmake -S . -B build -DCMAKE_PREFIX_PATH="path/to/install"
 ```
 
 ---
@@ -350,14 +411,14 @@ MiniTensor incorporates several optimization techniques:
 
 Measurements from the development system (AMD Ryzen AI 7 350):
 
-| Operation | Input size | Observed result |
-|---|---:|---|
-| Matrix multiplication | 128 × 128 | Up to 2.63× speedup |
-| Matrix multiplication | 256 × 256 | Up to 3.36× speedup |
-| Matrix multiplication | 1024 × 1024 | Up to 3.80× speedup |
-| Transpose | 256 × 256 | Up to 3.62× speedup |
-| Transpose | 1024 × 1024 | Up to 2.33× speedup |
-| Transpose | 2048 × 2048 | Up to 2.58× speedup |
+| Operation | Input Size | Observed Speedup |
+|---|---:|---:|
+| Matrix multiplication | 128 × 128 | Up to 2.63× |
+| Matrix multiplication | 256 × 256 | Up to 3.36× |
+| Matrix multiplication | 1024 × 1024 | Up to 3.80× |
+| Transpose | 256 × 256 | Up to 3.62× |
+| Transpose | 1024 × 1024 | Up to 2.33× |
+| Transpose | 2048 × 2048 | Up to 2.58× |
 
 Speedups compare the optimized implementation against its corresponding sequential baseline in the development benchmarks. Results depend on hardware, compiler, and workload.
 
@@ -373,7 +434,9 @@ Speedups compare the optimized implementation against its corresponding sequenti
 | Phase 4 | Advanced tensor operations | Completed |
 | Phase 5 | Performance optimization and parallel computing | Completed |
 | Phase 6 | Testing and application development | Completed |
-| Phase 7 | Packaging, documentation and public release | In progress |
+| Phase 7 | Packaging, documentation and public release | Completed |
+
+**All seven development phases have been completed.**
 
 ---
 
@@ -386,7 +449,7 @@ Potential future enhancements include:
 - Improved parallel scheduling.
 - Expanded benchmarking across different processors.
 - Additional examples and documentation.
-- Linux and cross-platform build verification.
+- Further cross-platform verification.
 
 ---
 
@@ -404,14 +467,24 @@ Contributions, suggestions, and performance improvements are welcome.
 
 ## License
 
-A license has not yet been selected for this project. Check the repository for licensing information before reusing or distributing the code.
+MiniTensor is licensed under the MIT License.
+
+See the [LICENSE](LICENSE) file for details.
 
 ---
 
-## Author
+## Release
 
-**MiniTensor — A C++17 Multidimensional Tensor Library**
+**Current Version: v0.1.0**
 
-GitHub Repository:
+The initial public release of MiniTensor includes tensor storage, indexing, mathematical operations, broadcasting, performance optimizations, testing, examples, and CMake packaging.
 
-https://github.com/manmeetmanchanda10016/Diwali-Project
+See the [GitHub Releases](https://github.com/manmeetmanchanda10016/Diwali-Project/releases) page for published releases.
+
+---
+
+## Repository
+
+**GitHub:** https://github.com/manmeetmanchanda10016/Diwali-Project
+
+**MiniTensor — A C++17 Multidimensional Tensor Library.**
