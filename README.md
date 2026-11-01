@@ -1,155 +1,66 @@
 # Mini Tensor Library (C++)
 
-A lightweight, high-performance multidimensional tensor library developed in C++ as part of the Diwali 2026 coding challenge.
-
-The project focuses on efficient memory management, multidimensional indexing, mathematical operations, broadcasting, and parallel matrix multiplication using OpenMP.
+A C++17 multidimensional tensor library developed for the Diwali 2026 coding challenge. It provides contiguous, 64-byte aligned storage; multidimensional indexing; tensor operations; broadcasting; reductions; and OpenMP matrix multiplication.
 
 ## Features
 
 ### Phase 1 – Tensor Representation and Memory Management
-- Multidimensional tensor creation.
-- Contiguous memory allocation.
-- 64-byte aligned memory allocation.
-- Shape and element-count management.
-- Deep copy and move semantics.
-- Scalar and empty tensor support.
-- Memory safety and overflow checking.
+
+- Create tensors with arbitrary-rank shapes.
+- Store values in contiguous, 64-byte aligned memory.
+- Track tensor shape and element count with overflow checking.
+- Support deep copy and move operations.
+- Support scalar and empty tensors.
 
 ### Phase 2 – Indexing and Memory Layout
-- Row-major memory layout.
-- Multidimensional indexing.
-- Element access using `at()`.
-- Flat indexing using `flat_at()`.
-- Tensor reshaping without changing the underlying data.
+
+- Use row-major memory layout.
+- Access elements with multidimensional `at()` and `operator()`.
+- Access contiguous elements with `flat_at()`.
+- Reshape tensors without changing their data.
 
 ### Phase 3 – Mathematical Operations
-- Element-wise addition.
-- Element-wise subtraction.
-- Element-wise multiplication.
+
+- Element-wise addition, subtraction, and multiplication.
 - Matrix multiplication.
-- Operator overloading (`+`, `-`, `*`).
 - OpenMP parallel matrix multiplication.
 - Hybrid matrix multiplication that selects sequential or parallel execution based on estimated workload.
 
 ### Phase 4 – Advanced Tensor Operations
+
 - Matrix transpose.
 - Broadcasting for addition, subtraction, and multiplication.
-- Tensor reduction operations:
-  - `sum()`
-  - `mean()`
-  - `min()`
-  - `max()`
-- Empty tensor and incompatible-shape error handling.
+- Reductions: `sum()`, `mean()`, `min()`, and `max()`.
+- Error handling for empty reductions and incompatible shapes.
+
+### Phase 5 – Performance and Parallel Computing
+
+- Compare baseline, blocked, OpenMP, and library hybrid matrix multiplication.
+- Run benchmarks in Release mode with warmups and repeated measurements.
+- Check sequential and parallel multiplication results against expected values.
 
 ## Performance
 
-Matrix multiplication benchmark results from the Release build:
+One Release-build benchmark sample on Windows with MinGW:
 
-| Matrix Size | Sequential | OpenMP | Hybrid |
-|---|---:|---:|---:|
-| 256 × 256 | 5.731 ms | 0.890 ms | 0.939 ms |
-| 512 × 512 | 33.008 ms | 5.886 ms | 6.013 ms |
-| 1024 × 1024 | 245.567 ms | 35.667 ms | 34.696 ms |
+| Matrix Size | Baseline | OpenMP | Library Hybrid | Hybrid Speedup |
+|---|---:|---:|---:|---:|
+| 256 × 256 | 2.660 ms | 0.643 ms | 0.561 ms | 4.74× |
+| 512 × 512 | 20.453 ms | 3.962 ms | 3.949 ms | 5.18× |
+| 1024 × 1024 | 173.768 ms | 35.499 ms | 31.633 ms | 5.49× |
 
-The hybrid implementation achieved approximately:
-- 6.10× speedup at 256 × 256.
-- 5.49× speedup at 512 × 512.
-- 7.08× speedup at 1024 × 1024.
+The blocked implementation did not improve performance in this sample. OpenMP overhead can make parallel execution slower for smaller matrices. Timings depend on hardware, compiler, thread count, and system load; these results are not a universal performance guarantee.
 
-*Benchmark results depend on hardware, compiler settings, and system load.*
+## Requirements
 
-## Technologies Used
+- C++17 compiler
+- CMake 3.16 or later
+- OpenMP-capable compiler and runtime
 
-- C++
-- CMake
-- GCC
-- OpenMP
-- Git and GitHub
+## Build
 
-## Project Structure
-
-```text
-MiniTensor_Phase1/
-├── include/
-│   └── minitensor/
-│       ├── Shape.h
-│       ├── Storage.h
-│       ├── Tensor.h
-│       └── Ops.h
-├── src/
-│   ├── Shape.cpp
-│   ├── Storage.cpp
-│   ├── Tensor.cpp
-│   └── Ops.cpp
-├── tests/
-│   ├── test_phase1.cpp
-│   ├── test_phase2.cpp
-│   ├── test_phase3.cpp
-│   └── test_phase4.cpp
-├── benchmarks/
-│   ├── benchmark_phase1.cpp
-│   ├── benchmark_v2.cpp
-│   └── benchmark_matmul.cpp
-├── examples/
-│   └── main.cpp
-├── CMakeLists.txt
-└── README.md
-```
-
-## Build Instructions
-
-### Requirements
-- C++ compiler with C++17 support.
-- CMake.
-- OpenMP support.
-
-### Build using CMake
-
-```bash
-cmake -S . -B build
-cmake --build build -j
-```
-
-### Run tests
-
-```bash
-ctest --test-dir build --output-on-failure
-```
-
-### Release build
-
-```bash
-cmake -S . -B build-release -DCMAKE_BUILD_TYPE=Release
-cmake --build build-release -j
-ctest --test-dir build-release --output-on-failure
-```
-
-On Windows with MinGW, specify the generator:
+### Windows with MinGW
 
 ```powershell
 cmake -S . -B build-release -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release
-```
-
-## Testing
-
-The project currently has four test suites:
-
-- Phase1Tests
-- Phase2Tests
-- Phase3Tests
-- Phase4Tests
-
-All four test suites currently pass.
-
-## Project Status
-
-| Phase | Status |
-|---|---|
-| Phase 1 – Tensor and Memory Management | Completed |
-| Phase 2 – Indexing and Reshape | Completed |
-| Phase 3 – Mathematical Operations and OpenMP | Completed |
-| Phase 4 – Advanced Tensor Operations | Completed |
-
-## Objective
-
-The goal is to build a compact tensor library from scratch while exploring low-level memory management, numerical computing, algorithm optimization, and parallel execution in C++.
+cmake --build build-release -j
