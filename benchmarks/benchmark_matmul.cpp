@@ -7,6 +7,7 @@
 #include <iostream>
 #include <vector>
 #include <stdexcept>
+#include <cmath>
 
 using namespace minitensor;
 using namespace std;
