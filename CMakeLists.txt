@@ -15,9 +15,7 @@ include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
 include(CheckIPOSupported)
 
-# ==========================================
 # Build options
-# ==========================================
 
 option(MINITENSOR_ENABLE_NATIVE
     "Optimize specifically for the current CPU"
@@ -29,9 +27,7 @@ option(MINITENSOR_ENABLE_LTO
     ON
 )
 
-# ==========================================
 # Link Time Optimization
-# ==========================================
 
 set(IPO_SUPPORTED FALSE)
 
@@ -49,9 +45,7 @@ if(MINITENSOR_ENABLE_LTO)
     endif()
 endif()
 
-# ==========================================
 # Compiler optimizations
-# ==========================================
 
 function(enable_optimizations target)
 
@@ -83,9 +77,7 @@ function(enable_optimizations target)
 
 endfunction()
 
-# ==========================================
 # Compiler warnings
-# ==========================================
 
 function(enable_warnings target)
 
@@ -104,15 +96,11 @@ function(enable_warnings target)
 
 endfunction()
 
-# ==========================================
 # OpenMP
-# ==========================================
 
 find_package(OpenMP REQUIRED)
 
-# ==========================================
 # Main library
-# ==========================================
 
 add_library(minitensor
     src/Shape.cpp
@@ -143,9 +131,7 @@ target_link_libraries(minitensor
 enable_warnings(minitensor)
 enable_optimizations(minitensor)
 
-# ==========================================
 # Testing
-# ==========================================
 
 enable_testing()
 
@@ -164,6 +150,7 @@ function(add_minitensor_test target source test_name)
     )
 
     # Keep assertions enabled in Release builds.
+
     if(MSVC)
         target_compile_options(${target} PRIVATE /UNDEBUG)
     elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
@@ -179,9 +166,7 @@ add_minitensor_test(test_phase4 tests/test_phase4.cpp Phase4Tests)
 add_minitensor_test(test_phase5 tests/test_phase5.cpp Phase5Tests)
 add_minitensor_test(test_phase6 tests/test_phase6.cpp Phase6Tests)
 
-# ==========================================
 # Examples
-# ==========================================
 
 add_executable(basic_example
     examples/main.cpp
@@ -201,9 +186,7 @@ target_link_libraries(tensor_application PRIVATE minitensor)
 enable_warnings(tensor_application)
 enable_optimizations(tensor_application)
 
-# ==========================================
 # Benchmarks
-# ==========================================
 
 function(add_minitensor_benchmark target source)
 
@@ -224,10 +207,9 @@ add_minitensor_benchmark(benchmark_transpose benchmarks/benchmark_transpose.cpp)
 add_minitensor_benchmark(benchmark_broadcast benchmarks/benchmark_broadcast.cpp)
 add_minitensor_benchmark(benchmark_broadcast_v2 benchmarks/benchmark_broadcast_v2.cpp)
 add_minitensor_benchmark(benchmark_broadcast_v3 benchmarks/benchmark_broadcast_v3.cpp)
+add_minitensor_benchmark(benchmark_remaining benchmarks/benchmark_remaining.cpp)
 
-# ==========================================
 # Installation and packaging
-# ==========================================
 
 install(
     TARGETS minitensor
@@ -269,9 +251,7 @@ install(
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/MiniTensor
 )
 
-# ==========================================
 # Configuration summary
-# ==========================================
 
 message(STATUS "====================================")
 message(STATUS "MiniTensor Build Configuration")
@@ -282,7 +262,4 @@ message(STATUS "Native CPU optimization: ${MINITENSOR_ENABLE_NATIVE}")
 message(STATUS "LTO requested: ${MINITENSOR_ENABLE_LTO}")
 message(STATUS "====================================")
 
-## License
-
-MiniTensor is licensed under the MIT License.
-See the [LICENSE](LICENSE) file for details.
+# License
