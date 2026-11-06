@@ -1,11 +1,11 @@
 # MiniTensor — A C++ Mini Tensor Library
 
-A lightweight, reusable multidimensional tensor library developed in C++ with a focus on memory management, mathematical operations, CPU performance optimization, and efficient tensor computation.
+A lightweight, reusable multidimensional tensor library developed in C++17, focusing on efficient memory management, mathematical operations, CPU performance optimization, and tensor computation.
 
 **Project:** Diwali 2026 Challenge  
 **Team Leader:** MANMEET SINGH MANCHANDA  
 **Team Size:** 4  
-**Development Period:** 01–05 November 2026  
+**Development Period:** November 2026  
 **Release:** v0.1.0 — Initial Release
 
 [GitHub Repository](https://github.com/manmeetmanchanda10016/Diwali-Project)
@@ -18,17 +18,18 @@ MiniTensor is a custom C++ tensor library designed to create, store, access, and
 
 The library implements fundamental tensor operations and incorporates CPU optimization techniques such as:
 
-- Contiguous memory allocation
-- 64-byte aligned storage
-- SIMD optimization
-- OpenMP parallel execution
-- Cache blocking
-- Hybrid matrix multiplication
-- Efficient multidimensional indexing
+- Contiguous memory allocation.
+- 64-byte aligned storage.
+- SIMD vectorization.
+- OpenMP parallel execution.
+- Cache blocking.
+- Hybrid matrix multiplication.
+- Efficient multidimensional indexing.
+- Shape and stride management.
 
-The project was developed in seven phases, progressing from basic tensor representation to advanced operations, performance optimization, testing, and CMake packaging.
+The project progressed through seven development phases, from basic tensor representation to advanced operations, performance optimization, testing, and CMake packaging.
 
-An additional GPU experiment was conducted using PyTorch and an NVIDIA Tesla T4 GPU in Google Colab to study the performance benefits of CUDA acceleration.
+An additional GPU experiment was conducted using PyTorch and an NVIDIA Tesla T4 GPU in Google Colab to study CUDA acceleration.
 
 **Important:** MiniTensor currently supports CPU execution. CUDA/GPU execution is not implemented in the library. The Tesla T4 experiment was conducted separately using PyTorch.
 
@@ -37,6 +38,7 @@ An additional GPU experiment was conducted using PyTorch and an NVIDIA Tesla T4 
 ## 2. Features
 
 ### Tensor Representation and Memory Management
+
 - Multidimensional tensor representation.
 - Shape and dimension management.
 - Contiguous memory storage.
@@ -46,13 +48,15 @@ An additional GPU experiment was conducted using PyTorch and an NVIDIA Tesla T4 
 - Scalar and zero-sized tensor handling.
 
 ### Indexing and Reshaping
+
 - Row-major memory layout.
 - Precomputed strides.
 - Flat indexing using `flat_at()`.
 - Multidimensional indexing using `at()`.
-- Tensor reshaping without copying tensor elements.
+- Tensor reshaping without copying tensor elements for compatible shapes.
 
 ### Mathematical Operations
+
 - Elementwise addition.
 - Elementwise subtraction.
 - Elementwise multiplication.
@@ -60,6 +64,7 @@ An additional GPU experiment was conducted using PyTorch and an NVIDIA Tesla T4 
 - Parallel matrix multiplication using OpenMP.
 
 ### Advanced Operations
+
 - Matrix transpose.
 - Broadcasting.
 - Broadcasting addition, subtraction, and multiplication.
@@ -69,6 +74,7 @@ An additional GPU experiment was conducted using PyTorch and an NVIDIA Tesla T4 
 - Maximum reduction.
 
 ### Performance Optimization
+
 - SIMD-based elementwise operations.
 - OpenMP parallel execution.
 - Parallel SIMD execution.
@@ -76,11 +82,12 @@ An additional GPU experiment was conducted using PyTorch and an NVIDIA Tesla T4 
 - Parallel blocked matrix multiplication.
 - Hybrid matrix multiplication.
 - Blocked transpose.
-- Native CPU optimization.
 - Link-Time Optimization (LTO).
+- Optional native CPU optimization.
 
 ### Testing and Packaging
-- Six test suites.
+
+- Six independent test suites.
 - Example applications.
 - Interactive tensor playground.
 - Performance benchmark programs.
@@ -124,6 +131,7 @@ MiniTensor/
 │   ├── benchmark_broadcast.cpp
 │   ├── benchmark_broadcast_v2.cpp
 │   ├── benchmark_broadcast_v3.cpp
+│   ├── benchmark_memory.cpp
 │   └── benchmark_remaining.cpp
 │
 ├── examples/
@@ -133,8 +141,22 @@ MiniTensor/
 ├── cmake/
 │   └── MiniTensorConfig.cmake.in
 │
+├── results/
+│   ├── matmul_benchmark.csv
+│   ├── memory_benchmark.csv
+│   ├── elementwise_results.txt
+│   ├── transpose_results.txt
+│   ├── broadcast_results.txt
+│   ├── broadcast_v2_results.txt
+│   ├── broadcast_v3_results.txt
+│   ├── remaining_results.txt
+│   ├── system_info.txt
+│   └── gpu/
+│
 ├── CMakeLists.txt
 ├── README.md
+├── BENCHMARK_REPORT.md
+├── OPTIMIZATIONS.md
 ├── LICENSE
 └── .gitignore
 ```
@@ -145,7 +167,6 @@ MiniTensor/
 
 ### Phase 1 — Tensor Representation and Memory Management
 
-Implemented:
 - Shape class for storing tensor dimensions.
 - Cached element count.
 - Storage class for contiguous memory allocation.
@@ -157,7 +178,6 @@ Implemented:
 
 ### Phase 2 — Indexing and Reshaping
 
-Implemented:
 - Row-major stride calculation.
 - Multidimensional indexing.
 - Flat indexing.
@@ -166,7 +186,6 @@ Implemented:
 
 ### Phase 3 — Mathematical Operations
 
-Implemented:
 - Elementwise addition.
 - Elementwise subtraction.
 - Elementwise multiplication.
@@ -176,7 +195,6 @@ Implemented:
 
 ### Phase 4 — Advanced Tensor Operations
 
-Implemented:
 - Matrix transpose.
 - Broadcasting.
 - Broadcasting arithmetic operations.
@@ -186,7 +204,6 @@ Implemented:
 
 ### Phase 5 — Performance Optimization
 
-Implemented:
 - Blocked matrix multiplication.
 - Parallel blocked matrix multiplication.
 - SIMD elementwise operations.
@@ -198,7 +215,6 @@ Implemented:
 
 ### Phase 6 — Testing and Application
 
-Implemented:
 - Six independent test suites.
 - Tensor examples.
 - Interactive tensor playground.
@@ -207,7 +223,6 @@ Implemented:
 
 ### Phase 7 — Packaging and Documentation
 
-Implemented:
 - CMake installation rules.
 - Exported CMake library target.
 - Package configuration.
@@ -221,16 +236,16 @@ Implemented:
 
 | Technology | Purpose |
 |---|---|
-| C++ | Core library implementation |
+| C++17 | Core library implementation |
 | CMake | Build system and packaging |
 | GCC | C++ compilation |
 | OpenMP | CPU parallel execution |
 | SIMD | Vectorized CPU operations |
 | Git | Version control |
-| GitHub | Project hosting and release |
+| GitHub | Project hosting |
 | Google Colab | Additional benchmarking environment |
 | PyTorch | External tensor library comparison |
-| CUDA | GPU experiment through PyTorch |
+| CUDA | Separate GPU experiment through PyTorch |
 
 ---
 
@@ -238,179 +253,202 @@ Implemented:
 
 Performance was evaluated using separate benchmark runs on the developer's laptop and Google Colab.
 
-The results below are reported separately because hardware, compiler versions, CPU allocation, and build configurations differ.
+The results are reported separately because hardware, compiler versions, CPU allocation, and build configurations differ.
 
-### 6.1 Developer Laptop — Matrix Multiplication
+### 6.1 Google Colab Environment
 
-**Hardware:** AMD Ryzen AI 7 350  
-**CPU:** 8 physical cores / 16 logical processors  
-**Compiler:** MSYS2 GCC 16.1.0  
-**Build:** Release with native optimization and LTO.
+The latest verified MiniTensor benchmark environment:
 
-| Matrix Size | Sequential | Best Parallel/Hybrid | Speedup |
-|---|---:|---:|---:|
-| 64×64 | 0.023 ms | 0.026 ms (OpenMP, 1 thread) | — |
-| 128×128 | 0.177 ms | 0.068 ms | 2.60× |
-| 256×256 | 1.444 ms | 0.430 ms | 3.36× |
-| 512×512 | 12.494 ms | 3.476 ms | 3.59× |
-| 1024×1024 | 95.876 ms | 25.204 ms | 3.80× |
+| Configuration | Details |
+|---|---|
+| Operating System | Ubuntu 24.04.4 LTS |
+| CPU | Intel Xeon @ 2.00 GHz |
+| Visible logical CPUs | 2 |
+| Compiler | GCC 13.3.0 |
+| C++ Standard | C++17 |
+| CMake | 3.31.10 |
+| OpenMP | 4.5 |
+| Optimization | `-O3 -DNDEBUG` |
+| Link-Time Optimization | Enabled |
+| Native CPU Optimization | Disabled |
 
-The best parallel configurations were selected from the tested thread counts. Parallel execution provided greater benefits as matrix size increased.
+The Colab runtime exposed two logical CPUs. Therefore, higher thread counts should be interpreted in the context of this limited CPU allocation.
 
-### 6.2 Developer Laptop — Blocked Transpose
+### 6.2 Matrix Multiplication
 
-| Matrix Size | Normal Transpose | Blocked 16×16 | Speedup |
-|---|---:|---:|---:|
-| 256×256 | 0.518 ms | 0.143 ms | 3.62× |
-| 512×512 | 2.269 ms | 0.985 ms | 2.30× |
-| 1024×1024 | 9.736 ms | 4.171 ms | 2.33× |
-| 2048×2048 | 40.869 ms | 15.870 ms | 2.58× |
+Selected results from the latest verified benchmark:
 
-Blocking improves cache locality by processing smaller matrix regions.
+| Matrix Size | Normal Sequential | Best Configuration | Best Median |
+|---|---:|---|---:|
+| 256 × 256 | 5.832 ms | Hybrid | 5.688 ms |
+| 512 × 512 | 48.556 ms | Hybrid, 2 threads | 44.745 ms |
+| 1024 × 1024 | 443.092 ms | OpenMP, 2 threads | 371.805 ms |
 
-### 6.3 Developer Laptop — Elementwise Operations
+For the 1024 × 1024 matrix multiplication workload, the best tested configuration achieved approximately **16.1% lower execution time** than normal sequential multiplication.
 
-Tensor size: 16 million elements.
+All 29 tested configurations passed correctness validation.
 
-| Operation | Scalar | SIMD | Best Parallel |
-|---|---:|---:|---:|
-| Addition | 100.311 ms | 42.135 ms | 40.131 ms |
-| Subtraction | 100.462 ms | 33.138 ms | 40.265 ms |
-| Multiplication | 101.531 ms | 41.696 ms | 40.206 ms |
+The parallel-blocked implementation was also evaluated, but it did not consistently outperform the best sequential, OpenMP, or hybrid variants.
 
-The results demonstrate the benefits of SIMD and parallel execution for large elementwise workloads.
+### 6.3 Elementwise Operations
 
----
+Selected results from the MiniTensor elementwise benchmark:
 
-## 7. Google Colab — MiniTensor CPU Benchmarks
-
-Additional benchmarking was performed using Google Colab.
-
-**Compiler:** GNU 13.3.0  
-**OpenMP:** 4.5  
-**LTO:** Enabled  
-**Native CPU optimization:** Disabled
-
-### 7.1 Matrix Multiplication
-
-| Matrix Size | Sequential | Best Parallel/Hybrid | Speedup |
-|---|---:|---:|---:|
-| 64×64 | 0.173 ms | 0.168 ms | 1.03× |
-| 128×128 | 1.408 ms | 1.140 ms | 1.24× |
-| 256×256 | 6.112 ms | 5.551 ms | 1.10× |
-| 512×512 | 50.952 ms | 44.856 ms | 1.14× |
-| 1024×1024 | 636.381 ms | 367.324 ms | 1.73× |
-
-The best configuration varied by matrix size. The Colab results show approximately 1.73× improvement at 1024×1024.
-
-### 7.2 Elementwise Operations
-
-Best observed SIMD or parallel configuration:
-
-| Tensor Size | Operation | Scalar | Best Optimized | Speedup |
+| Tensor Size | Operation | Scalar (ms) | SIMD (ms) | Best Tested (ms) |
 |---|---|---:|---:|---:|
-| 1M | Addition | 1.402 ms | 1.277 ms | 1.10× |
-| 1M | Subtraction | 1.335 ms | 1.332 ms | 1.00× |
-| 1M | Multiplication | 1.450 ms | 1.298 ms | 1.12× |
-| 4M | Addition | 8.264 ms | 7.333 ms | 1.13× |
-| 4M | Subtraction | 8.263 ms | 7.639 ms | 1.08× |
-| 4M | Multiplication | 8.516 ms | 7.336 ms | 1.16× |
-| 16M | Addition | 87.326 ms | 84.221 ms | 1.04× |
-| 16M | Subtraction | 87.818 ms | 84.611 ms | 1.04× |
-| 16M | Multiplication | 88.441 ms | 83.732 ms | 1.06× |
+| 1M | Addition | 1.465 | 1.347 | 1.287 |
+| 1M | Subtraction | 1.418 | 1.401 | 1.291 |
+| 1M | Multiplication | 1.348 | 1.387 | 1.296 |
+| 4M | Addition | 8.459 | 8.832 | 7.870 |
+| 16M | Addition | 89.104 | 87.681 | 85.451 |
+| 16M | Multiplication | 86.841 | 87.248 | 82.348 |
 
-All reported elementwise configurations passed the benchmark correctness checks.
+The results demonstrate that SIMD and OpenMP improvements depend on workload size, operation type, memory bandwidth, and thread overhead.
 
-The gains were modest in Colab, and increasing the thread count did not always improve execution time. This can happen when operations are limited by memory bandwidth or parallel execution overhead.
+They do not guarantee a speedup for every operation.
 
-### 7.3 Blocked Transpose
+### 6.4 Blocked Transpose
 
-| Matrix Size | Normal | Best Block Size | Best Blocked Time | Speedup |
+The transpose benchmark evaluates cache-blocked implementations using different tile sizes.
+
+| Matrix Size | Normal (ms) | Best Block Size | Blocked Time (ms) | Speedup |
 |---|---:|---:|---:|---:|
-| 256×256 | 0.1917 ms | 16 | 0.0830 ms | 2.31× |
-| 512×512 | 1.2851 ms | 64 | 0.8340 ms | 1.54× |
-| 1024×1024 | 5.3095 ms | 64 | 3.5020 ms | 1.52× |
-| 2048×2048 | 58.6203 ms | 16 | 29.8970 ms | 1.96× |
+| 256 × 256 | 0.1964 | 16 | 0.1190 | 1.65× |
+| 512 × 512 | 1.2918 | 32 | 0.8772 | 1.47× |
+| 1024 × 1024 | 5.3929 | 32 | 3.7340 | 1.44× |
+| 2048 × 2048 | 66.9556 | 32 | 30.9378 | 2.16× |
 
-The optimal block size varied depending on matrix dimensions.
+The results show that cache blocking can improve transpose performance, particularly for larger matrices.
 
-### 7.4 Additional Operations
+### 6.5 Broadcasting
+
+The project includes multiple broadcasting benchmark experiments.
+
+The results vary depending on tensor shape and indexing strategy.
+
+Higher-dimensional cases showed improvements in some optimized variants, while simpler cases experienced slowdowns.
+
+The third benchmark version uses matched inputs, allocation, and timing methodology to provide a more controlled comparison.
+
+No universal broadcasting speedup is claimed.
+
+### 6.6 Memory Management
+
+The memory benchmark separates raw allocation, initialization, and tensor construction.
+
+Selected measurements:
+
+| Elements | Raw Allocation | Raw Allocation + Initialization | Storage | Tensor |
+|---|---:|---:|---:|---:|
+| 262,144 | 0.083 µs | 87.293 µs | 87.249 µs | 87.441 µs |
+| 1,048,576 | 0.084 µs | 378.721 µs | 469.078 µs | 435.976 µs |
+
+These measurements help distinguish allocator overhead from the cost of initializing and managing tensor storage.
+
+### 6.7 Additional Operations
+
+Selected measurements from the remaining operations benchmark:
 
 | Operation | Input | Execution Time |
 |---|---|---:|
-| Construction | 1,024 elements | 0.0005 ms |
-| Construction | 100,000 elements | 0.0213 ms |
-| Construction | 1M elements | 0.3852 ms |
-| Flat indexing | 262,144 elements | 0.3334 ms |
-| Multidimensional indexing | 262,144 accesses | 5.3204 ms |
+| Tensor construction | 1M elements | 0.3918 ms |
+| Flat indexing | 262,144 accesses | 0.3340 ms |
+| Multidimensional indexing | 262,144 accesses | 5.5587 ms |
 | Two reshape changes | 262,144 elements | 0.0002 ms |
-| Fill | 1M elements | 0.3818 ms |
-| Sum | 1M elements | 0.6387 ms |
-| Mean | 1M elements | 0.6367 ms |
-| Minimum | 1M elements | 1.3341 ms |
-| Maximum | 1M elements | 1.2918 ms |
+| Fill | 1M elements | 0.4426 ms |
+| Sum | 1M elements | 0.6347 ms |
+| Mean | 1M elements | 0.6349 ms |
+| Minimum | 1M elements | 1.2752 ms |
+| Maximum | 1M elements | 1.2698 ms |
+
+These values represent measurements from the supplied Colab benchmark run.
 
 ---
 
-## 8. CUDA Experiment — PyTorch CPU vs NVIDIA Tesla T4
+## 7. CUDA Experiment — PyTorch CPU vs NVIDIA Tesla T4
 
-An additional GPU experiment was conducted in Google Colab to study the performance difference between CPU and GPU tensor computation.
+An additional GPU experiment was conducted using PyTorch to study CPU-versus-GPU execution.
 
 **Environment:**
-- PyTorch: 2.11.0+cu130
-- GPU: NVIDIA Tesla T4
-- CPU threads: 1
-- CUDA execution through PyTorch.
 
-The experiment measured matrix multiplication and elementwise operations on CPU and CUDA.
+| Configuration | Details |
+|---|---|
+| GPU | NVIDIA Tesla T4 |
+| PyTorch | 2.11.0+cu130 |
+| CUDA | 13.0 |
+| CPU threads | 2 |
+| Data type | Float64 |
 
-**Important:** MiniTensor does not currently implement CUDA. This experiment was performed separately using PyTorch to evaluate GPU acceleration.
+This is a separate experiment. MiniTensor itself does not currently implement CUDA.
 
-### 8.1 Matrix Multiplication
+### 7.1 Matrix Multiplication
 
-| Matrix Size | PyTorch CPU | PyTorch CUDA | GPU Speedup |
+Selected results from the final controlled experiment:
+
+| Matrix Size | PyTorch CPU (ms) | CUDA Compute (ms) | CUDA End-to-End (ms) |
 |---|---:|---:|---:|
-| 64×64 | 0.0083 ms | 0.0315 ms | 0.26× |
-| 128×128 | 0.0345 ms | 0.0353 ms | 0.98× |
-| 256×256 | 0.2908 ms | 0.0687 ms | 4.23× |
-| 512×512 | 2.4581 ms | 0.1590 ms | 15.46× |
-| 1024×1024 | 23.8251 ms | 0.9082 ms | 26.24× |
+| 64 × 64 | 0.0152 | 0.2687 | 0.3705 |
+| 128 × 128 | 0.0769 | 0.2740 | 0.4755 |
+| 256 × 256 | 0.5302 | 0.5207 | 1.0654 |
+| 512 × 512 | 3.9840 | 3.7812 | 5.5136 |
+| 1024 × 1024 | 63.0601 | 13.9156 | 15.9228 |
 
-The Tesla T4 showed substantial acceleration for larger matrices.
+For 1024 × 1024 matrix multiplication, CUDA achieved approximately **4.53× compute-only speedup** over the PyTorch CPU measurement.
 
-For smaller matrices, GPU execution overhead reduced the performance advantage.
+### 7.2 Elementwise Operations
 
-### 8.2 Elementwise Operations
+Selected measurements:
 
-| Operation | PyTorch CPU | PyTorch CUDA | GPU Speedup |
-|---|---:|---:|---:|
-| Addition | 47.2916 ms | 0.8096 ms | 58.40× |
-| Subtraction | 36.5214 ms | 0.8017 ms | 45.55× |
-| Multiplication | 36.0570 ms | 0.7983 ms | 45.16× |
+| Tensor Size | Operation | CPU (ms) | CUDA Compute (ms) | CUDA End-to-End (ms) |
+|---|---|---:|---:|---:|
+| 1M | Addition | 1.0861 | 0.1173 | 5.1228 |
+| 1M | Subtraction | 1.1592 | 0.1260 | 6.0450 |
+| 1M | Multiplication | 4.0036 | 0.1238 | 5.1269 |
+| 16M | Addition | 56.2036 | 1.5918 | 142.6512 |
+| 16M | Subtraction | 57.7352 | 1.5938 | 139.5210 |
+| 16M | Multiplication | 57.2397 | 1.5892 | 165.8820 |
 
-**Benchmark methodology:** Input tensors were already allocated on the GPU before the timed operations. CUDA synchronization was used around measurements. Therefore, these CUDA timings exclude host-to-device data transfer.
+### 7.3 CUDA Experiment Findings
 
-### 8.3 CUDA Experiment Findings
+- CUDA compute-only performance improved substantially for large workloads.
+- Small matrix operations did not benefit from GPU execution because of launch and execution overhead.
+- Data transfer overhead significantly affected end-to-end elementwise performance.
+- CUDA end-to-end execution was slower than CPU execution for all elementwise cases shown.
+- CUDA was faster end-to-end for the 1024 × 1024 matrix multiplication case.
 
-- GPU acceleration becomes more beneficial as computational workload increases.
-- Small matrix operations may not benefit from GPU execution because of launch and execution overhead.
-- The Tesla T4 achieved approximately 26.24× the PyTorch CPU performance for 1024×1024 matrix multiplication in this experiment.
-- Elementwise operations also showed significant GPU acceleration in the recorded measurements.
-- These are PyTorch CPU-versus-CUDA results, not MiniTensor GPU results.
+**Important:** These results describe PyTorch CPU-versus-CUDA performance. They do not represent MiniTensor GPU performance.
 
-### 8.4 MiniTensor vs PyTorch
+---
 
-MiniTensor's Colab CPU results can also be viewed alongside the PyTorch results.
+## 8. Benchmarking Methodology
 
-| Matrix Size | MiniTensor Best CPU | PyTorch CPU | PyTorch CUDA |
-|---|---:|---:|---:|
-| 64×64 | 0.168 ms | 0.0083 ms | 0.0315 ms |
-| 128×128 | 1.140 ms | 0.0345 ms | 0.0353 ms |
-| 256×256 | 5.551 ms | 0.2908 ms | 0.0687 ms |
-| 512×512 | 44.856 ms | 2.4581 ms | 0.1590 ms |
-| 1024×1024 | 367.324 ms | 23.8251 ms | 0.9082 ms |
+The project includes separate benchmark programs for:
 
-This is an indicative comparison between different implementations and benchmark harnesses, not a controlled comparison of identical kernels. PyTorch uses highly optimized numerical libraries, while MiniTensor is a custom C++ implementation.
+- Tensor construction and memory allocation.
+- Indexing and reshaping.
+- Matrix multiplication.
+- Elementwise operations.
+- Broadcasting.
+- Matrix transpose.
+- Reduction operations.
+
+The C++ matrix multiplication and memory benchmarks use:
+
+- 3 warm-up runs.
+- 10 measured runs.
+- Average execution time.
+- Median execution time.
+- CSV result generation.
+
+Other MiniTensor benchmark programs report measurements through their respective console logs and should be interpreted according to their individual timing implementations.
+
+The PyTorch GPU experiment separates:
+
+**Compute-only measurement:** Inputs are already present on the GPU and only computation is measured.
+
+**End-to-end measurement:** Includes CPU-to-GPU transfers, computation, and GPU-to-CPU result transfer.
+
+These measurements represent different workloads and should not be treated as equivalent.
 
 ---
 
@@ -429,9 +467,9 @@ MiniTensor includes six independent test suites.
 
 **Total: 6/6 test suites passed.**
 
-The tests were executed using CTest in both the local laptop environment and Google Colab.
+The latest fresh Linux build audit also confirmed that benchmark and example executables compiled successfully.
 
-An independent CMake package consumer test also successfully located and linked the installed MiniTensor library using:
+An independent CMake package consumer test successfully located and linked the installed MiniTensor library using:
 
 ```cmake
 find_package(MiniTensor REQUIRED)
@@ -502,38 +540,11 @@ ctest --test-dir build --output-on-failure
 
 ---
 
-## 11. Benchmarks
-
-The project includes separate benchmark programs for:
-
-- Tensor construction and memory allocation.
-- Indexing and reshaping.
-- Matrix multiplication.
-- Elementwise operations.
-- Broadcasting.
-- Matrix transpose.
-- Reduction operations.
-
-Run the benchmark executables after building the project:
-
-```bash
-./build-release/benchmark_matmul
-./build-release/benchmark_elementwise
-./build-release/benchmark_transpose
-./build-release/benchmark_remaining
-```
-
-On Windows, run the corresponding `.exe` files from the build directory if required.
-
-Benchmark results may vary depending on hardware, compiler settings, CPU allocation, and system load.
-
----
-
-## 12. CMake Packaging
+## 11. CMake Packaging
 
 MiniTensor supports installation and package export through CMake.
 
-The library target is:
+The exported library target is:
 
 ```cmake
 MiniTensor::minitensor
@@ -549,36 +560,59 @@ The package configuration also declares its OpenMP dependency.
 
 ---
 
+## 12. Optimization Documentation
+
+Detailed implementation and optimization notes are available in:
+
+- `OPTIMIZATIONS.md` — memory management, SIMD, OpenMP, matrix multiplication, transpose, broadcasting, reductions, and future optimization opportunities.
+- `BENCHMARK_REPORT.md` — benchmark methodology, environment details, measured results, and limitations.
+- `results/` — raw benchmark outputs and CSV files.
+
+These documents provide additional technical detail beyond this README.
+
+---
+
 ## 13. Limitations and Future Improvements
 
-Current limitations:
+### Current Limitations
 
 - CUDA/GPU execution is not implemented in MiniTensor.
 - OpenMP is currently required by the configured build and package.
 - Performance depends on compiler optimizations and hardware characteristics.
-- Benchmark results may vary across execution environments.
+- Benchmark results vary across execution environments.
+- The final competition evaluation protocol has not yet been applied.
 
-Possible future improvements:
+### Future Improvements
 
-- Optional CUDA backend.
-- GPU-accelerated matrix multiplication.
-- Optional OpenMP support.
-- Additional tensor manipulation operations.
-- Improved parallel reductions.
-- Broader compiler and platform testing.
-- More extensive performance benchmarking.
+- Optimize matrix multiplication and cache blocking.
+- Improve SIMD vectorization.
+- Optimize broadcasting and reduction operations.
+- Reduce unnecessary memory allocations and copies.
+- Introduce tensor views and slicing.
+- Investigate optional CUDA support.
+- Improve parallel execution and thread scaling.
+- Expand edge-case and randomized correctness tests.
+- Evaluate performance using the professor's common benchmark protocol.
 
 ---
 
-## 14. Conclusion
+## 14. Competition Benchmarking Status
 
-MiniTensor demonstrates the implementation of a reusable multidimensional tensor library in C++.
+The current benchmark measurements are preliminary development results.
 
-The project covers tensor representation, memory management, indexing, mathematical operations, broadcasting, reductions, CPU optimization, testing, and CMake packaging.
+The final competition evaluation should follow the professor's common benchmark protocol, including identical test cases and input dimensions for all teams.
 
-Performance experiments demonstrated improvements through OpenMP parallel execution, SIMD optimization, and cache blocking. The additional PyTorch CUDA experiment provided a comparison of CPU and GPU execution, highlighting the potential advantages of GPU acceleration for larger workloads.
+Final performance claims should be based on:
 
-The project successfully completed all seven development phases and provides a foundation for further development of high-performance tensor computation in C++.
+- The specified Ubuntu environment.
+- The required compiler and optimization flags.
+- The official benchmark inputs.
+- The prescribed warm-up and measurement procedure.
+- Average and median execution times.
+- Separate allocation and deallocation measurements.
+- GFLOPS for matrix multiplication.
+
+The current Colab results should not be presented as official competition results until this protocol is applied.
 
 ---
 
@@ -590,7 +624,8 @@ The project successfully completed all seven development phases and provides a f
 **Team Size:** 4  
 **Release:** v0.1.0 — Initial Release
 
-**GitHub Repository:**  
+**GitHub Repository:**
+
 https://github.com/manmeetmanchanda10016/Diwali-Project
 
 **License:** MIT License
