@@ -1,0 +1,98 @@
+MINITENSOR ELEMENTWISE BENCHMARK
+Scalar vs SIMD vs Parallel SIMD
+
+========================================
+Tensor size: 1000000 elements
+========================================
+
+ADDITION
+Scalar: 1.46541 ms
+SIMD:   1.3465 ms | Speedup: 1.08831x | PASS
+Parallel ( 1 threads):    1.38591 ms | Speedup: 1.057x | PASS
+Parallel ( 2 threads):      1.287 ms | Speedup: 1.139x | PASS
+Parallel ( 4 threads):      1.366 ms | Speedup: 1.073x | PASS
+Parallel ( 8 threads):      1.385 ms | Speedup: 1.058x | PASS
+Parallel (16 threads):      1.618 ms | Speedup: 0.906x | PASS
+
+SUBTRACTION
+Scalar: 1.418 ms
+SIMD:   1.401 ms | Speedup: 1.012x | PASS
+Parallel ( 1 threads):      1.375 ms | Speedup: 1.031x | PASS
+Parallel ( 2 threads):      1.291 ms | Speedup: 1.099x | PASS
+Parallel ( 4 threads):      1.407 ms | Speedup: 1.008x | PASS
+Parallel ( 8 threads):      1.372 ms | Speedup: 1.034x | PASS
+Parallel (16 threads):      1.465 ms | Speedup: 0.968x | PASS
+
+MULTIPLICATION
+Scalar: 1.348 ms
+SIMD:   1.387 ms | Speedup: 0.972x | PASS
+Parallel ( 1 threads):      1.379 ms | Speedup: 0.978x | PASS
+Parallel ( 2 threads):      1.296 ms | Speedup: 1.040x | PASS
+Parallel ( 4 threads):      1.478 ms | Speedup: 0.912x | PASS
+Parallel ( 8 threads):      1.403 ms | Speedup: 0.961x | PASS
+Parallel (16 threads):      1.476 ms | Speedup: 0.914x | PASS
+
+========================================
+Tensor size: 4000000 elements
+========================================
+
+ADDITION
+Scalar: 8.459 ms
+SIMD:   8.832 ms | Speedup: 0.958x | PASS
+Parallel ( 1 threads):      8.235 ms | Speedup: 1.027x | PASS
+Parallel ( 2 threads):      8.079 ms | Speedup: 1.047x | PASS
+Parallel ( 4 threads):      7.870 ms | Speedup: 1.075x | PASS
+Parallel ( 8 threads):     10.313 ms | Speedup: 0.820x | PASS
+Parallel (16 threads):      8.292 ms | Speedup: 1.020x | PASS
+
+SUBTRACTION
+Scalar: 8.229 ms
+SIMD:   8.258 ms | Speedup: 0.996x | PASS
+Parallel ( 1 threads):      8.034 ms | Speedup: 1.024x | PASS
+Parallel ( 2 threads):      7.173 ms | Speedup: 1.147x | PASS
+Parallel ( 4 threads):      7.779 ms | Speedup: 1.058x | PASS
+Parallel ( 8 threads):      7.999 ms | Speedup: 1.029x | PASS
+Parallel (16 threads):      8.244 ms | Speedup: 0.998x | PASS
+
+MULTIPLICATION
+Scalar: 8.310 ms
+SIMD:   8.123 ms | Speedup: 1.023x | PASS
+Parallel ( 1 threads):      8.260 ms | Speedup: 1.006x | PASS
+Parallel ( 2 threads):      7.318 ms | Speedup: 1.135x | PASS
+Parallel ( 4 threads):      7.859 ms | Speedup: 1.057x | PASS
+Parallel ( 8 threads):      9.851 ms | Speedup: 0.844x | PASS
+Parallel (16 threads):      7.976 ms | Speedup: 1.042x | PASS
+
+========================================
+Tensor size: 16000000 elements
+========================================
+
+ADDITION
+Scalar: 89.104 ms
+SIMD:   87.681 ms | Speedup: 1.016x | PASS
+Parallel ( 1 threads):     88.525 ms | Speedup: 1.007x | PASS
+Parallel ( 2 threads):     85.451 ms | Speedup: 1.043x | PASS
+Parallel ( 4 threads):    106.558 ms | Speedup: 0.836x | PASS
+Parallel ( 8 threads):    105.401 ms | Speedup: 0.845x | PASS
+Parallel (16 threads):    108.415 ms | Speedup: 0.822x | PASS
+
+SUBTRACTION
+Scalar: 87.216 ms
+SIMD:   88.622 ms | Speedup: 0.984x | PASS
+Parallel ( 1 threads):     87.133 ms | Speedup: 1.001x | PASS
+Parallel ( 2 threads):     84.846 ms | Speedup: 1.028x | PASS
+Parallel ( 4 threads):     84.330 ms | Speedup: 1.034x | PASS
+Parallel ( 8 threads):     86.738 ms | Speedup: 1.006x | PASS
+Parallel (16 threads):     84.615 ms | Speedup: 1.031x | PASS
+
+MULTIPLICATION
+Scalar: 86.841 ms
+SIMD:   87.248 ms | Speedup: 0.995x | PASS
+Parallel ( 1 threads):     87.419 ms | Speedup: 0.993x | PASS
+Parallel ( 2 threads):     84.388 ms | Speedup: 1.029x | PASS
+Parallel ( 4 threads):     82.348 ms | Speedup: 1.055x | PASS
+Parallel ( 8 threads):     82.773 ms | Speedup: 1.049x | PASS
+Parallel (16 threads):    110.034 ms | Speedup: 0.789x | PASS
+
+Benchmark completed.
+Prevent-optimization checksum: 2821413.263

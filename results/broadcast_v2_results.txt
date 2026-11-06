@@ -1,0 +1,51 @@
+MINITENSOR BROADCASTING BENCHMARK V2
+
+========== ADD ==========
+
+Same shape
+Current:       0.3532 ms
+Precomputed:   4.4845 ms
+Specialized:   0.3278 ms
+Precomputed speedup: 0.0787x
+Specialized speedup: 1.0773x
+
+Row broadcasting
+Current:       0.2428 ms
+Precomputed:   4.4677 ms
+Specialized:   0.2480 ms
+Precomputed speedup: 0.0543x
+Specialized speedup: 0.9790x
+
+Column broadcasting
+Current:       0.2410 ms
+Precomputed:   4.4034 ms
+Specialized:   0.2388 ms
+Precomputed speedup: 0.0547x
+Specialized speedup: 1.0092x
+
+Higher-dimensional broadcasting
+Current:       54.5357 ms
+Precomputed:   26.6250 ms
+Specialized:   26.7492 ms
+Precomputed speedup: 2.0483x
+Specialized speedup: 2.0388x
+
+========== SUBTRACT ==========
+
+Row broadcasting
+Current:       0.2452 ms
+Precomputed:   4.4510 ms
+Specialized:   0.2389 ms
+Precomputed speedup: 0.0551x
+Specialized speedup: 1.0265x
+
+========== MULTIPLY ==========
+
+Row broadcasting
+Current:       0.2398 ms
+Precomputed:   4.5445 ms
+Specialized:   0.2496 ms
+Precomputed speedup: 0.0528x
+Specialized speedup: 0.9609x
+
+Benchmark completed.
