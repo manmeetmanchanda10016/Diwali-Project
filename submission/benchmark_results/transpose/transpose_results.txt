@@ -1,0 +1,78 @@
+MINITENSOR TRANSPOSE BENCHMARK
+========================================
+
+========================================
+MATRIX SIZE: 256 x 256
+========================================
+
+Normal transpose:
+Normal: 0.1964 ms
+
+Library transpose:
+Library: 0.1199 ms
+
+Blocked transpose results:
+Block  16: 0.1190 ms | Speedup: 1.6505x
+Block  32: 0.2077 ms | Speedup: 0.9458x
+Block  64: 0.1993 ms | Speedup: 0.9858x
+Block 128: 0.1983 ms | Speedup: 0.9908x
+
+Library speedup: 1.6385x
+
+========================================
+MATRIX SIZE: 512 x 512
+========================================
+
+Normal transpose:
+Normal: 1.2918 ms
+
+Library transpose:
+Library: 1.1599 ms
+
+Blocked transpose results:
+Block  16: 1.1655 ms | Speedup: 1.1083x
+Block  32: 0.8772 ms | Speedup: 1.4726x
+Block  64: 0.8827 ms | Speedup: 1.4635x
+Block 128: 0.9052 ms | Speedup: 1.4270x
+
+Library speedup: 1.1137x
+
+========================================
+MATRIX SIZE: 1024 x 1024
+========================================
+
+Normal transpose:
+Normal: 5.3929 ms
+
+Library transpose:
+Library: 4.7682 ms
+
+Blocked transpose results:
+Block  16: 4.7475 ms | Speedup: 1.1359x
+Block  32: 3.7340 ms | Speedup: 1.4442x
+Block  64: 3.9519 ms | Speedup: 1.3646x
+Block 128: 4.6133 ms | Speedup: 1.1690x
+
+Library speedup: 1.1310x
+
+========================================
+MATRIX SIZE: 2048 x 2048
+========================================
+
+Normal transpose:
+Normal: 66.9556 ms
+
+Library transpose:
+Library: 38.8685 ms
+
+Blocked transpose results:
+Block  16: 37.7369 ms | Speedup: 1.7743x
+Block  32: 30.9378 ms | Speedup: 2.1642x
+Block  64: 32.5310 ms | Speedup: 2.0582x
+Block 128: 39.3307 ms | Speedup: 1.7024x
+
+Library speedup: 1.7226x
+
+========================================
+Benchmark completed successfully.
+Checksum: 12420.0000

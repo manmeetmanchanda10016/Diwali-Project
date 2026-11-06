@@ -1,0 +1,62 @@
+MINITENSOR BROADCASTING BENCHMARK
+========================================
+
+Case 1: (256,256) + (256,1)
+Add
+Current: 0.0374 ms
+Optimized: 1.1380 ms
+Speedup: 0.0329x
+Subtract
+Current: 0.0339 ms
+Optimized: 1.1686 ms
+Speedup: 0.0290x
+Multiply
+Current: 0.0301 ms
+Optimized: 1.1464 ms
+Speedup: 0.0263x
+
+Case 2: (512,512) + (1,512)
+Add
+Current: 0.2363 ms
+Optimized: 4.6607 ms
+Speedup: 0.0507x
+Subtract
+Current: 0.2503 ms
+Optimized: 4.6368 ms
+Speedup: 0.0540x
+Multiply
+Current: 0.2781 ms
+Optimized: 4.5907 ms
+Speedup: 0.0606x
+
+Case 3: (256,256,16) + (1,1,16)
+Add
+Current: 55.3456 ms
+Optimized: 28.1318 ms
+Speedup: 1.9674x
+Subtract
+Current: 53.8000 ms
+Optimized: 28.1303 ms
+Speedup: 1.9125x
+Multiply
+Current: 54.7981 ms
+Optimized: 27.8593 ms
+Speedup: 1.9670x
+
+Case 4: (512,512) + (512,512)
+Add
+Current: 0.3367 ms
+Optimized: 4.6462 ms
+Speedup: 0.0725x
+Subtract
+Current: 0.3360 ms
+Optimized: 4.5797 ms
+Speedup: 0.0734x
+Multiply
+Current: 0.3337 ms
+Optimized: 4.7175 ms
+Speedup: 0.0707x
+
+========================================
+Benchmark completed successfully.
+Checksum: 127224.0000
