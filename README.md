@@ -150,8 +150,6 @@ MiniTensor/
 │       └── pytorch-cuda-elementwise.svg
 │
 ├── results/                         # Earlier development benchmark logs
-├── submission/
-│   └── benchmark_results/            # Final 2026 benchmark submission archive
 │   ├── matmul_benchmark.csv
 │   ├── memory_benchmark.csv
 │   ├── elementwise_results.txt
@@ -162,6 +160,9 @@ MiniTensor/
 │   ├── remaining_results.txt
 │   ├── system_info.txt
 │   └── gpu/
+│
+├── submission/
+│   └── benchmark_results/            # Final 2026 benchmark submission archive
 │
 ├── CMakeLists.txt
 ├── README.md
@@ -603,6 +604,8 @@ Detailed implementation and optimization notes are available in:
 - `OPTIMIZATIONS.md` — memory management, SIMD, OpenMP, matrix multiplication, transpose, broadcasting, reductions, and future optimization opportunities.
 - `BENCHMARK_REPORT.md` — benchmark methodology, environment details, measured results, and limitations.
 - `results/` — raw benchmark outputs and CSV files.
+- [`submission/benchmark_results/`](submission/benchmark_results/) — final 2026 benchmark archive, including the consolidated execution-time CSV and categorized raw outputs.
+- [`docs/benchmark-visuals/`](docs/benchmark-visuals/) — SVG charts embedded above.
 
 These documents provide additional technical detail beyond this README.
 
