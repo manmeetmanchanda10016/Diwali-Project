@@ -5,6 +5,11 @@
 
 namespace minitensor {
 
+Tensor::Tensor(UninitializedTag, const std::vector<std::size_t>& dimensions)
+    : shape_(dimensions),
+      storage_(Storage::UninitializedTag{}, shape_.num_elements()) {
+}
+
 Tensor::Tensor(
     const std::vector<std::size_t>& dimensions,
     double initial_value
@@ -48,9 +53,10 @@ void Tensor::fill(double value) {
 }
 
 std::size_t Tensor::offset(
-    const std::vector<std::size_t>& indices
+    const std::size_t* indices,
+    std::size_t count
 ) const {
-    if (indices.size() != rank()) {
+    if (count != rank()) {
         throw std::invalid_argument(
             "Tensor index rank does not match tensor rank"
         );
@@ -61,7 +67,7 @@ std::size_t Tensor::offset(
 
     std::size_t result = 0;
 
-    for (std::size_t axis = 0; axis < indices.size(); ++axis) {
+    for (std::size_t axis = 0; axis < count; ++axis) {
         if (indices[axis] >= dimensions[axis]) {
             throw std::out_of_range(
                 "Tensor index is out of bounds"
@@ -77,25 +83,25 @@ std::size_t Tensor::offset(
 double& Tensor::at(
     const std::vector<std::size_t>& indices
 ) {
-    return storage_.data()[offset(indices)];
+    return storage_.data()[offset(indices.data(), indices.size())];
 }
 
 const double& Tensor::at(
     const std::vector<std::size_t>& indices
 ) const {
-    return storage_.data()[offset(indices)];
+    return storage_.data()[offset(indices.data(), indices.size())];
 }
 
 double& Tensor::at(
     std::initializer_list<std::size_t> indices
 ) {
-    return at(std::vector<std::size_t>(indices));
+    return storage_.data()[offset(indices.begin(), indices.size())];
 }
 
 const double& Tensor::at(
     std::initializer_list<std::size_t> indices
 ) const {
-    return at(std::vector<std::size_t>(indices));
+    return storage_.data()[offset(indices.begin(), indices.size())];
 }
 
 double& Tensor::operator()(
