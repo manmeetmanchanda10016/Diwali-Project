@@ -141,7 +141,17 @@ MiniTensor/
 ├── cmake/
 │   └── MiniTensorConfig.cmake.in
 │
-├── results/
+├── docs/
+│   └── benchmark-visuals/
+│       ├── matmul.svg
+│       ├── elementwise.svg
+│       ├── transpose.svg
+│       ├── pytorch-cuda-matmul.svg
+│       └── pytorch-cuda-elementwise.svg
+│
+├── results/                         # Earlier development benchmark logs
+├── submission/
+│   └── benchmark_results/            # Final 2026 benchmark submission archive
 │   ├── matmul_benchmark.csv
 │   ├── memory_benchmark.csv
 │   ├── elementwise_results.txt
@@ -254,6 +264,32 @@ MiniTensor/
 Performance was evaluated using separate benchmark runs on the developer's laptop and Google Colab.
 
 The results are reported separately because hardware, compiler versions, CPU allocation, and build configurations differ.
+
+### Benchmark Results at a Glance
+
+The following charts summarize selected measurements from the recorded runs. Lower execution time is better. These are environment-specific observations, not guaranteed speedups on other hardware.
+
+**MiniTensor — matrix multiplication**
+
+![MiniTensor matrix multiplication benchmark](docs/benchmark-visuals/matmul.svg)
+
+**MiniTensor — elementwise operations**
+
+![MiniTensor elementwise benchmark](docs/benchmark-visuals/elementwise.svg)
+
+**MiniTensor — blocked transpose**
+
+![MiniTensor blocked transpose benchmark](docs/benchmark-visuals/transpose.svg)
+
+**Separate PyTorch experiment — CPU vs CUDA matrix multiplication**
+
+![PyTorch CPU vs CUDA matrix multiplication](docs/benchmark-visuals/pytorch-cuda-matmul.svg)
+
+**Separate PyTorch experiment — CPU vs CUDA elementwise operations**
+
+![PyTorch CPU vs CUDA elementwise operations](docs/benchmark-visuals/pytorch-cuda-elementwise.svg)
+
+> The PyTorch/CUDA charts are a separate reference experiment on a Tesla T4. They do not indicate CUDA support in MiniTensor. For detailed methodology, exact values, and limitations, see [BENCHMARK_REPORT.md](BENCHMARK_REPORT.md).
 
 ### 6.1 Google Colab Environment
 
