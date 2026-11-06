@@ -1,0 +1,27 @@
+MiniTensor Remaining Operations Benchmark
+Median of repeated runs; Release build recommended.
+
+=== Tensor Construction / Allocation ===
+Tensor construction           1024 elements     0.0003 ms
+Tensor construction           100000 elements   0.0201 ms
+Tensor construction           1000000 elements  0.3918 ms
+
+=== Indexing (512 x 512) ===
+flat_at() read                262144 accesses   0.3340 ms
+at({row, col}) read           262144 accesses   5.5587 ms
+
+=== Reshape ===
+reshape (two shape changes)   262144 elements   0.0002 ms
+
+=== Fill ===
+fill()                        1024 elements     0.0002 ms
+fill()                        100000 elements   0.0240 ms
+fill()                        1000000 elements  0.4426 ms
+
+=== Reductions (1,000,000 elements) ===
+sum()                         1000000 elements  0.6347 ms
+mean()                        1000000 elements  0.6349 ms
+min()                         1000000 elements  1.2752 ms
+max()                         1000000 elements  1.2698 ms
+
+Benchmark completed.

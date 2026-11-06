@@ -1,0 +1,58 @@
+MINITENSOR BROADCASTING BENCHMARK V3
+====================================
+Same inputs, allocation and timing methodology
+
+========== ADD ==========
+
+Same shape
+Library:          0.2712 ms
+Direct reference: 0.2383 ms
+Speedup:          1.1385x
+
+Row broadcasting
+Library:          0.2440 ms
+Direct reference: 0.2544 ms
+Speedup:          0.9590x
+
+Column broadcasting
+Library:          0.2401 ms
+Direct reference: 0.2566 ms
+Speedup:          0.9359x
+
+========== SUBTRACT ==========
+
+Same shape
+Library:          0.2448 ms
+Direct reference: 0.2422 ms
+Speedup:          1.0109x
+
+Row broadcasting
+Library:          0.2747 ms
+Direct reference: 0.2476 ms
+Speedup:          1.1095x
+
+Column broadcasting
+Library:          0.2671 ms
+Direct reference: 0.2388 ms
+Speedup:          1.1182x
+
+========== MULTIPLY ==========
+
+Same shape
+Library:          0.2499 ms
+Direct reference: 0.2656 ms
+Speedup:          0.9408x
+
+Row broadcasting
+Library:          0.2734 ms
+Direct reference: 0.2430 ms
+Speedup:          1.1250x
+
+Column broadcasting
+Library:          0.2577 ms
+Direct reference: 0.2380 ms
+Speedup:          1.0827x
+
+====================================
+Benchmark completed.
+Checksum: 1210.8800
