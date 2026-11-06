@@ -1,5 +1,8 @@
 # MiniTensor Benchmark Report
 
+> **Archive note:** The final 2026 benchmark files submitted to the repository are stored separately in [`submission/benchmark_results/`](submission/benchmark_results/). This report discusses the development benchmark runs and the separate PyTorch reference experiment; do not treat the two result collections as interchangeable.
+
+
 ## 1. Executive summary
 
 This report records the current MiniTensor CPU benchmark run and a separate PyTorch CPU-versus-CUDA experiment on a Google Colab runtime. The MiniTensor implementation passed the recorded correctness checks in the supplied benchmark logs, and the project test suite was previously reported as passing all six CTest suites.
@@ -207,6 +210,8 @@ These are separate validation layers: PyTorch CPU/CUDA equivalence does not by i
 - `gpu_end_to_end.csv`
 - `final_controlled_gpu_benchmark.csv`
 - `system_info.txt`
+ 
+The final 2026 submission archive is maintained separately under `submission/benchmark_results/`; it includes categorized outputs and `consolidated_execution_times.csv`.
 
 ## 9. Final conclusion
 
