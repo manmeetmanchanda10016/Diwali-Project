@@ -10,13 +10,20 @@
 
 namespace minitensor {
 
+namespace detail { struct TensorAccess; }
+
 class Tensor {
 private:
+    friend struct detail::TensorAccess;
+    struct UninitializedTag {};
+    Tensor(UninitializedTag, const std::vector<std::size_t>& dimensions);
+
     Shape shape_;
     Storage storage_;
 
     std::size_t offset(
-        const std::vector<std::size_t>& indices
+        const std::size_t* indices,
+        std::size_t count
     ) const;
 
 public:

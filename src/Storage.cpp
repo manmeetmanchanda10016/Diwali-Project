@@ -49,13 +49,14 @@ Storage::Storage(
     std::size_t size,
     double initialValue
 )
+    : Storage(UninitializedTag{}, size) {
+    fill(initialValue);
+}
+
+Storage::Storage(UninitializedTag, std::size_t size)
     : buffer_(nullptr),
       size_(0) {
     allocate(size);
-
-    if (size_ > 0) {
-        std::fill_n(buffer_, size_, initialValue);
-    }
 }
 
 Storage::~Storage() {

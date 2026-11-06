@@ -8,6 +8,20 @@
 
 namespace minitensor {
 
+namespace detail {
+
+// Only kernels that overwrite every output element may use this factory.
+// Public tensor/storage constructors retain their initialized behavior.
+struct TensorAccess
+{
+    static Tensor empty(const std::vector<std::size_t>& dimensions)
+    {
+        return Tensor(Tensor::UninitializedTag{}, dimensions);
+    }
+};
+
+} // namespace detail
+
 namespace {
 
 void validate_same_shape(const Tensor& a, const Tensor& b)
@@ -48,37 +62,6 @@ std::vector<std::size_t> broadcast_shape(
     return result;
 }
 
-std::size_t broadcast_offset(
-    std::size_t flat_index,
-    const std::vector<std::size_t>& output_shape,
-    const std::vector<std::size_t>& input_shape)
-{
-    const std::size_t output_rank = output_shape.size();
-    const std::size_t input_rank = input_shape.size();
-
-    std::size_t offset = 0;
-    std::size_t input_stride = 1;
-
-    for (std::size_t i = 0; i < input_rank; ++i)
-    {
-        const std::size_t input_dim =
-            input_shape[input_rank - 1 - i];
-
-        const std::size_t output_dim =
-            output_shape[output_rank - 1 - i];
-
-        const std::size_t coordinate = flat_index % output_dim;
-        flat_index /= output_dim;
-
-        if (input_dim != 1)
-            offset += coordinate * input_stride;
-
-        input_stride *= input_dim;
-    }
-
-    return offset;
-}
-
 struct AddOp
 {
     double operator()(double x, double y) const { return x + y; }
@@ -106,7 +89,7 @@ Tensor broadcast_operation(
     const std::vector<std::size_t> output_shape =
         broadcast_shape(a, b);
 
-    Tensor result(output_shape);
+    Tensor result = detail::TensorAccess::empty(output_shape);
 
     const double* A = a.data();
     const double* B = b.data();
@@ -117,12 +100,29 @@ Tensor broadcast_operation(
     if (count == 0)
         return result;
 
-    if (ad == bd)
+    if (a.size() == count && b.size() == count)
     {
         #pragma omp simd
         for (std::size_t i = 0; i < count; ++i)
             C[i] = operation(A[i], B[i]);
 
+        return result;
+    }
+
+    if (a.size() == 1)
+    {
+        const double value = A[0];
+        #pragma omp simd
+        for (std::size_t i = 0; i < count; ++i)
+            C[i] = operation(value, B[i]);
+        return result;
+    }
+    if (b.size() == 1)
+    {
+        const double value = B[0];
+        #pragma omp simd
+        for (std::size_t i = 0; i < count; ++i)
+            C[i] = operation(A[i], value);
         return result;
     }
 
@@ -204,15 +204,75 @@ Tensor broadcast_operation(
         }
     }
 
-    for (std::size_t i = 0; i < count; ++i)
+    // Normalize leading/missing axes to zero strides. Cache this once rather
+    // than dividing a flat index separately for every operand and element.
+    const std::size_t rank = output_shape.size();
+    std::vector<std::size_t> a_strides(rank, 0), b_strides(rank, 0);
+    for (std::size_t axis = 0; axis < ad.size(); ++axis)
+        if (ad[axis] != 1)
+            a_strides[rank - ad.size() + axis] = a.shape().strides()[axis];
+    for (std::size_t axis = 0; axis < bd.size(); ++axis)
+        if (bd[axis] != 1)
+            b_strides[rank - bd.size() + axis] = b.shape().strides()[axis];
+
+    std::size_t active_rank = rank;
+    while (active_rank && output_shape[active_rank - 1] == 1) --active_rank;
+    // Scalar/all-unit outputs were handled by the full/scalar paths above.
+    std::size_t inner = output_shape[active_rank - 1];
+    const std::size_t a_step = a_strides[active_rank - 1];
+    const std::size_t b_step = b_strides[active_rank - 1];
+    std::size_t outer_rank = active_rank - 1;
+    while (outer_rank)
     {
-        const std::size_t a_offset =
-            broadcast_offset(i, output_shape, ad);
+        const std::size_t axis = outer_rank - 1;
+        if (output_shape[axis] != 1 &&
+            (a_strides[axis] != a_step * inner ||
+             b_strides[axis] != b_step * inner))
+            break;
+        inner *= output_shape[axis];
+        --outer_rank;
+    }
 
-        const std::size_t b_offset =
-            broadcast_offset(i, output_shape, bd);
-
-        C[i] = operation(A[a_offset], B[b_offset]);
+    std::vector<std::size_t> coordinates(outer_rank, 0);
+    std::size_t a_offset = 0, b_offset = 0;
+    for (std::size_t base = 0; base < count; base += inner)
+    {
+        const double* a_row = A + a_offset;
+        const double* b_row = B + b_offset;
+        double* out = C + base;
+        if (a_step == 0 && b_step == 0)
+            std::fill_n(out, inner, operation(a_row[0], b_row[0]));
+        else if (a_step == 0)
+        {
+            const double value = a_row[0];
+            #pragma omp simd
+            for (std::size_t j = 0; j < inner; ++j)
+                out[j] = operation(value, b_row[j]);
+        }
+        else if (b_step == 0)
+        {
+            const double value = b_row[0];
+            #pragma omp simd
+            for (std::size_t j = 0; j < inner; ++j)
+                out[j] = operation(a_row[j], value);
+        }
+        else
+        {
+            #pragma omp simd
+            for (std::size_t j = 0; j < inner; ++j)
+                out[j] = operation(a_row[j], b_row[j]);
+        }
+        // Advance an outer-coordinate odometer once per contiguous run.
+        for (std::size_t axis = outer_rank; axis > 0; --axis)
+        {
+            const std::size_t d = axis - 1;
+            ++coordinates[d];
+            a_offset += a_strides[d]; b_offset += b_strides[d];
+            if (coordinates[d] < output_shape[d]) break;
+            coordinates[d] = 0;
+            a_offset -= a_strides[d] * output_shape[d];
+            b_offset -= b_strides[d] * output_shape[d];
+        }
     }
 
     return result;
@@ -228,7 +288,7 @@ Tensor add(const Tensor& a, const Tensor& b)
 {
     validate_same_shape(a, b);
 
-    Tensor result(a.shape().dimensions());
+    Tensor result = detail::TensorAccess::empty(a.shape().dimensions());
 
     const double* __restrict__ A = a.data();
     const double* __restrict__ B = b.data();
@@ -247,7 +307,7 @@ Tensor subtract(const Tensor& a, const Tensor& b)
 {
     validate_same_shape(a, b);
 
-    Tensor result(a.shape().dimensions());
+    Tensor result = detail::TensorAccess::empty(a.shape().dimensions());
 
     const double* __restrict__ A = a.data();
     const double* __restrict__ B = b.data();
@@ -266,7 +326,7 @@ Tensor multiply(const Tensor& a, const Tensor& b)
 {
     validate_same_shape(a, b);
 
-    Tensor result(a.shape().dimensions());
+    Tensor result = detail::TensorAccess::empty(a.shape().dimensions());
 
     const double* __restrict__ A = a.data();
     const double* __restrict__ B = b.data();
@@ -287,9 +347,13 @@ Tensor multiply(const Tensor& a, const Tensor& b)
 
 Tensor add_parallel(const Tensor& a, const Tensor& b)
 {
+    // Avoid creating a team for short, bandwidth-bound loops.
+    if (a.size() < 65536 || omp_get_max_threads() == 1)
+        return add(a, b);
+
     validate_same_shape(a, b);
 
-    Tensor result(a.shape().dimensions());
+    Tensor result = detail::TensorAccess::empty(a.shape().dimensions());
 
     const double* __restrict__ A = a.data();
     const double* __restrict__ B = b.data();
@@ -306,9 +370,13 @@ Tensor add_parallel(const Tensor& a, const Tensor& b)
 
 Tensor subtract_parallel(const Tensor& a, const Tensor& b)
 {
+    // Avoid creating a team for short, bandwidth-bound loops.
+    if (a.size() < 65536 || omp_get_max_threads() == 1)
+        return subtract(a, b);
+
     validate_same_shape(a, b);
 
-    Tensor result(a.shape().dimensions());
+    Tensor result = detail::TensorAccess::empty(a.shape().dimensions());
 
     const double* __restrict__ A = a.data();
     const double* __restrict__ B = b.data();
@@ -325,9 +393,13 @@ Tensor subtract_parallel(const Tensor& a, const Tensor& b)
 
 Tensor multiply_parallel(const Tensor& a, const Tensor& b)
 {
+    // Avoid creating a team for short, bandwidth-bound loops.
+    if (a.size() < 65536 || omp_get_max_threads() == 1)
+        return multiply(a, b);
+
     validate_same_shape(a, b);
 
-    Tensor result(a.shape().dimensions());
+    Tensor result = detail::TensorAccess::empty(a.shape().dimensions());
 
     const double* __restrict__ A = a.data();
     const double* __restrict__ B = b.data();
@@ -443,16 +515,57 @@ Tensor matmul_parallel(const Tensor& a, const Tensor& b)
     const double* B = b.data();
     double* C = result.data();
 
-    #pragma omp parallel for schedule(static)
-    for (long long i = 0; i < static_cast<long long>(rows_a); ++i)
-    {
-        for (std::size_t k = 0; k < cols_a; ++k)
-        {
-            const double value = A[i * cols_a + k];
+    // Empty products need no pointer arithmetic or parallel region.
+    if (rows_a == 0 || cols_a == 0 || cols_b == 0)
+        return result;
 
-            for (std::size_t j = 0; j < cols_b; ++j)
-                C[i * cols_b + j] +=
-                    value * B[k * cols_b + j];
+    // Reuse each B value across four rows. Each worker owns complete output
+    // rows, so no synchronization is needed while accumulating over k.
+    // Keep one-row tasks when grouping would leave requested workers idle.
+    const std::size_t row_group =
+        rows_a / 4 >= static_cast<std::size_t>(omp_get_max_threads()) ? 4 : 1;
+    const std::size_t groups = rows_a / row_group + (rows_a % row_group != 0);
+
+    #pragma omp parallel for schedule(static)
+    for (long long group = 0; group < static_cast<long long>(groups); ++group)
+    {
+        const std::size_t i = static_cast<std::size_t>(group) * row_group;
+        if (row_group == 4 && rows_a - i >= row_group)
+        {
+            double* c0 = C + i * cols_b;
+            double* c1 = c0 + cols_b;
+            double* c2 = c1 + cols_b;
+            double* c3 = c2 + cols_b;
+            for (std::size_t k = 0; k < cols_a; ++k)
+            {
+                const double a0 = A[i * cols_a + k];
+                const double a1 = A[(i + 1) * cols_a + k];
+                const double a2 = A[(i + 2) * cols_a + k];
+                const double a3 = A[(i + 3) * cols_a + k];
+                const double* b_row = B + k * cols_b;
+                #pragma omp simd
+                for (std::size_t j = 0; j < cols_b; ++j)
+                {
+                    const double value = b_row[j];
+                    c0[j] += a0 * value;
+                    c1[j] += a1 * value;
+                    c2[j] += a2 * value;
+                    c3[j] += a3 * value;
+                }
+            }
+        }
+        else
+        {
+            // Single-row tasks or the final one to three rows.
+            const std::size_t end = i + std::min(row_group, rows_a - i);
+            for (std::size_t row = i; row < end; ++row)
+                for (std::size_t k = 0; k < cols_a; ++k)
+                {
+                    const double value = A[row * cols_a + k];
+                    #pragma omp simd
+                    for (std::size_t j = 0; j < cols_b; ++j)
+                        C[row * cols_b + j] += value * B[k * cols_b + j];
+                }
         }
     }
 
@@ -623,7 +736,7 @@ Tensor transpose(const Tensor& a)
     const std::size_t rows = dims[0];
     const std::size_t cols = dims[1];
 
-    Tensor result({cols, rows});
+    Tensor result = detail::TensorAccess::empty({cols, rows});
 
     const double* input = a.data();
     double* output = result.data();
@@ -639,9 +752,10 @@ Tensor transpose(const Tensor& a)
             const std::size_t j_end =
                 jj + std::min(BLOCK_SIZE, cols - jj);
 
-            for (std::size_t i = ii; i < i_end; ++i)
+            // Write adjacent output elements; tiles bound the strided reads.
+            for (std::size_t j = jj; j < j_end; ++j)
             {
-                for (std::size_t j = jj; j < j_end; ++j)
+                for (std::size_t i = ii; i < i_end; ++i)
                     output[j * rows + i] = input[i * cols + j];
             }
         }
@@ -677,11 +791,20 @@ double sum(const Tensor& a)
 {
     double result = 0.0;
     const double* input = a.data();
+    const std::size_t count = a.size();
 
-    #pragma omp simd reduction(+:result)
-    for (std::size_t i = 0; i < a.size(); ++i)
-        result += input[i];
-
+    if (count >= 262144 && omp_get_max_threads() > 1)
+    {
+        #pragma omp parallel for simd schedule(static) reduction(+:result)
+        for (long long i = 0; i < static_cast<long long>(count); ++i)
+            result += input[i];
+    }
+    else
+    {
+        #pragma omp simd reduction(+:result)
+        for (std::size_t i = 0; i < count; ++i)
+            result += input[i];
+    }
     return result;
 }
 
@@ -694,36 +817,56 @@ double mean(const Tensor& a)
     return sum(a) / static_cast<double>(a.size());
 }
 
+namespace {
+
+template <typename Compare>
+double extreme(const Tensor& a, Compare better)
+{
+    const std::size_t count = a.size();
+    const double* input = a.data();
+    double result = input[0];
+    if (count < 262144 || omp_get_max_threads() == 1)
+    {
+        for (std::size_t i = 1; i < count; ++i)
+            if (better(input[i], result)) result = input[i];
+        return result;
+    }
+
+    // Scan ordered contiguous chunks; combine in chunk order. Unlike an
+    // unordered SIMD min/max reduction, this retains first-NaN and signed-zero
+    // behavior of the original strict-comparison loop.
+    std::vector<double> partial(omp_get_max_threads(), input[0]);
+    #pragma omp parallel
+    {
+        const std::size_t id = static_cast<std::size_t>(omp_get_thread_num());
+        const std::size_t team = static_cast<std::size_t>(omp_get_num_threads());
+        const std::size_t chunk = count / team, extra = count % team;
+        const std::size_t begin = chunk * id + std::min(id, extra);
+        const std::size_t end = begin + chunk + (id < extra);
+        double local = input[0];
+        for (std::size_t i = begin; i < end; ++i)
+            if (better(input[i], local)) local = input[i];
+        partial[id] = local;
+    }
+    for (const double value : partial)
+        if (better(value, result)) result = value;
+    return result;
+}
+
+} // namespace
+
 double min(const Tensor& a)
 {
     if (a.size() == 0)
-        throw std::invalid_argument(
-            "Minimum of an empty tensor is undefined");
-
-    const double* input = a.data();
-    double result = input[0];
-
-    for (std::size_t i = 1; i < a.size(); ++i)
-        if (input[i] < result)
-            result = input[i];
-
-    return result;
+        throw std::invalid_argument("Minimum of an empty tensor is undefined");
+    return extreme(a, [](double x, double y) { return x < y; });
 }
 
 double max(const Tensor& a)
 {
     if (a.size() == 0)
-        throw std::invalid_argument(
-            "Maximum of an empty tensor is undefined");
-
-    const double* input = a.data();
-    double result = input[0];
-
-    for (std::size_t i = 1; i < a.size(); ++i)
-        if (input[i] > result)
-            result = input[i];
-
-    return result;
+        throw std::invalid_argument("Maximum of an empty tensor is undefined");
+    return extreme(a, [](double x, double y) { return x > y; });
 }
 
 } // namespace minitensor

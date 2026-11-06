@@ -165,6 +165,8 @@ add_minitensor_test(test_phase3 tests/test_phase3.cpp Phase3Tests)
 add_minitensor_test(test_phase4 tests/test_phase4.cpp Phase4Tests)
 add_minitensor_test(test_phase5 tests/test_phase5.cpp Phase5Tests)
 add_minitensor_test(test_phase6 tests/test_phase6.cpp Phase6Tests)
+add_minitensor_test(test_matmul_reference tests/test_matmul_reference.cpp MatmulReferenceTests)
+add_minitensor_test(test_ops_reference tests/test_ops_reference.cpp OpsReferenceTests)
 
 # Examples
 
@@ -202,6 +204,9 @@ endfunction()
 add_minitensor_benchmark(benchmark_phase1 benchmarks/benchmark_phase1.cpp)
 add_minitensor_benchmark(benchmark_v2 benchmarks/benchmark_v2.cpp)
 add_minitensor_benchmark(benchmark_matmul benchmarks/benchmark_matmul.cpp)
+add_minitensor_benchmark(benchmark_matmul_focus benchmarks/benchmark_matmul_focus.cpp)
+add_minitensor_benchmark(benchmark_ops_focus benchmarks/benchmark_ops_focus.cpp)
+add_minitensor_benchmark(benchmark_matmul_experiments benchmarks/benchmark_matmul_experiments.cpp)
 add_minitensor_benchmark(benchmark_elementwise benchmarks/benchmark_elementwise.cpp)
 add_minitensor_benchmark(benchmark_transpose benchmarks/benchmark_transpose.cpp)
 add_minitensor_benchmark(benchmark_broadcast benchmarks/benchmark_broadcast.cpp)
