@@ -8,6 +8,10 @@ namespace minitensor {
 
 class Storage {
 private:
+    friend class Tensor;
+    struct UninitializedTag {};
+    Storage(UninitializedTag, std::size_t size);
+
     static constexpr std::size_t ALIGNMENT = 64;
 
     double* buffer_;
