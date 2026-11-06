@@ -263,3 +263,5 @@ message(STATUS "LTO requested: ${MINITENSOR_ENABLE_LTO}")
 message(STATUS "====================================")
 
 # License
+
+add_minitensor_benchmark(benchmark_memory benchmarks/benchmark_memory.cpp)

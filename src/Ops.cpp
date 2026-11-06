@@ -1,4 +1,3 @@
-
 #include "minitensor/Ops.h"
 
 #include <algorithm>
@@ -80,9 +79,6 @@ std::size_t broadcast_offset(
     return offset;
 }
 
-// Operation functors allow the compiler to inline the operation
-// inside SIMD loops.
-
 struct AddOp
 {
     double operator()(double x, double y) const { return x + y; }
@@ -121,7 +117,6 @@ Tensor broadcast_operation(
     if (count == 0)
         return result;
 
-    // Fast path 1: identical shapes.
     if (ad == bd)
     {
         #pragma omp simd
@@ -131,7 +126,6 @@ Tensor broadcast_operation(
         return result;
     }
 
-    // Fast paths 2 and 3: two-dimensional row/column broadcasting.
     if (output_shape.size() == 2 &&
         ad.size() == 2 && bd.size() == 2)
     {
@@ -147,7 +141,6 @@ Tensor broadcast_operation(
         const bool a_is_column = ad[0] == rows && ad[1] == 1;
         const bool b_is_column = bd[0] == rows && bd[1] == 1;
 
-        // Row broadcasting: A is a row, B is the full matrix.
         if (a_is_row && b_is_full)
         {
             for (std::size_t i = 0; i < rows; ++i)
@@ -163,7 +156,6 @@ Tensor broadcast_operation(
             return result;
         }
 
-        // Row broadcasting: B is a row, A is the full matrix.
         if (b_is_row && a_is_full)
         {
             for (std::size_t i = 0; i < rows; ++i)
@@ -179,7 +171,6 @@ Tensor broadcast_operation(
             return result;
         }
 
-        // Column broadcasting: A is a column, B is the full matrix.
         if (a_is_column && b_is_full)
         {
             for (std::size_t i = 0; i < rows; ++i)
@@ -196,7 +187,6 @@ Tensor broadcast_operation(
             return result;
         }
 
-        // Column broadcasting: B is a column, A is the full matrix.
         if (b_is_column && a_is_full)
         {
             for (std::size_t i = 0; i < rows; ++i)
@@ -214,8 +204,6 @@ Tensor broadcast_operation(
         }
     }
 
-    // General broadcasting fallback.
-    // Handles scalars, higher dimensions and other valid combinations.
     for (std::size_t i = 0; i < count; ++i)
     {
         const std::size_t a_offset =
@@ -233,7 +221,7 @@ Tensor broadcast_operation(
 } // anonymous namespace
 
 // --------------------------------------------------
-// Element-wise operations (SIMD)
+// Element-wise operations
 // --------------------------------------------------
 
 Tensor add(const Tensor& a, const Tensor& b)
@@ -552,56 +540,66 @@ Tensor matmul_parallel_blocked(
     const auto& as = a.shape().dimensions();
     const auto& bs = b.shape().dimensions();
 
-    const std::size_t rows_a = as[0];
-    const std::size_t cols_a = as[1];
-    const std::size_t rows_b = bs[0];
-    const std::size_t cols_b = bs[1];
+    const std::size_t M = as[0];
+    const std::size_t K = as[1];
+    const std::size_t N = bs[1];
 
-    if (cols_a != rows_b)
+    if (K != bs[0])
         throw std::invalid_argument(
             "Matrix dimensions are incompatible for multiplication");
 
     if (block_size == 0)
         throw std::invalid_argument("Block size cannot be zero");
 
-    Tensor result({rows_a, cols_b}, 0.0);
+    Tensor result({M, N}, 0.0);
 
     const double* A = a.data();
     const double* B = b.data();
     double* C = result.data();
 
     const std::size_t row_blocks =
-        rows_a / block_size + (rows_a % block_size != 0);
+        M / block_size + (M % block_size != 0);
 
-    #pragma omp parallel for schedule(static)
-    for (long long block_i = 0;
-         block_i < static_cast<long long>(row_blocks);
-         ++block_i)
+    const std::size_t col_blocks =
+        N / block_size + (N % block_size != 0);
+
+    // Parallelize independent output tiles across both dimensions.
+    #pragma omp parallel for collapse(2) schedule(static)
+    for (long long bi = 0;
+         bi < static_cast<long long>(row_blocks); ++bi)
     {
-        const std::size_t ii =
-            static_cast<std::size_t>(block_i) * block_size;
-
-        const std::size_t i_end =
-            ii + std::min(block_size, rows_a - ii);
-
-        for (std::size_t jj = 0; jj < cols_b; jj += block_size)
+        for (long long bj = 0;
+             bj < static_cast<long long>(col_blocks); ++bj)
         {
-            for (std::size_t kk = 0; kk < cols_a; kk += block_size)
+            const std::size_t ii =
+                static_cast<std::size_t>(bi) * block_size;
+
+            const std::size_t jj =
+                static_cast<std::size_t>(bj) * block_size;
+
+            const std::size_t i_end =
+                ii + std::min(block_size, M - ii);
+
+            const std::size_t j_end =
+                jj + std::min(block_size, N - jj);
+
+            for (std::size_t kk = 0; kk < K; kk += block_size)
             {
-                const std::size_t j_end =
-                    jj + std::min(block_size, cols_b - jj);
                 const std::size_t k_end =
-                    kk + std::min(block_size, cols_a - kk);
+                    kk + std::min(block_size, K - kk);
 
                 for (std::size_t i = ii; i < i_end; ++i)
                 {
                     for (std::size_t k = kk; k < k_end; ++k)
                     {
-                        const double value = A[i * cols_a + k];
+                        const double value = A[i * K + k];
 
+                        #pragma omp simd
                         for (std::size_t j = jj; j < j_end; ++j)
-                            C[i * cols_b + j] +=
-                                value * B[k * cols_b + j];
+                        {
+                            C[i * N + j] +=
+                                value * B[k * N + j];
+                        }
                     }
                 }
             }
