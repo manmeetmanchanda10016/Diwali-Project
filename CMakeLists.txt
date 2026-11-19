@@ -161,6 +161,7 @@ endfunction()
 
 add_minitensor_test(test_phase1 tests/test_phase1.cpp Phase1Tests)
 add_minitensor_test(test_phase2 tests/test_phase2.cpp Phase2Tests)
+add_minitensor_test(test_common_tc01_tc16 tests/test_common_tc01_tc16.cpp CommonSpecTC01TC16Tests)
 add_minitensor_test(test_phase3 tests/test_phase3.cpp Phase3Tests)
 add_minitensor_test(test_phase4 tests/test_phase4.cpp Phase4Tests)
 add_minitensor_test(test_phase5 tests/test_phase5.cpp Phase5Tests)
