@@ -3,6 +3,7 @@
 #include <cmath>
 #include <cstdint>
 #include <exception>
+#include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <limits>
@@ -54,7 +55,12 @@ static void run(const std::string& id, const std::string& name,
     Result r{id, name, "FAIL", expected, "", "", notes};
     try {
         r.actual = fn();
-        r.status = "PASS";
+        if (r.actual.rfind("FAIL:", 0) == 0) {
+            r.status = "FAIL";
+            r.actual.erase(0, 5);
+        } else {
+            r.status = "PASS";
+        }
     } catch (const std::exception& e) {
         r.status = "FAIL";
         r.error = e.what();
@@ -70,6 +76,7 @@ static void run(const std::string& id, const std::string& name,
 
 static void write_csv(const std::string& path) {
     std::ofstream out(path);
+    if (!out) throw std::runtime_error("cannot open CSV output: " + path);
     out << "test_id,test_name,status,expected,actual,error,notes\n";
     auto quote = [](const std::string& s) {
         std::string q = "\"" ;
@@ -155,8 +162,8 @@ int main(int argc, char** argv) {
             if (d != sizeof(double)) throw std::runtime_error("non-contiguous adjacent elements");
         }
         if (sizeof(double) != sizeof(float))
-            return "contiguous; address_delta=" + std::to_string(delta) +
-                   "; SPEC MISMATCH: library uses double (8 bytes), spec expects float32 (4 bytes)";
+            return "FAIL: contiguous; address_delta=" + std::to_string(delta) +
+                   "; observed element type is double (8 bytes), but the specification requires float32 (4 bytes)";
         return "contiguous; address_delta=" + std::to_string(delta);
     }, "Contiguity is checked, but exact float32 byte stride cannot pass with this double-based implementation.");
 
