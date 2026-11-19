@@ -1,4 +1,4 @@
-name: Common Tensor Tests TC01-TC16
+name: Common Tensor Tests TC01-TC50
 
 on:
   push:
@@ -7,6 +7,7 @@ on:
       - "include/minitensor/**"
       - "src/**"
       - "tests/test_common_tc01_tc16.cpp"
+      - "tests/test_common_tc17_tc50.cpp"
       - ".github/workflows/tc01-tc16.yml"
   pull_request:
     paths:
@@ -14,6 +15,7 @@ on:
       - "include/minitensor/**"
       - "src/**"
       - "tests/test_common_tc01_tc16.cpp"
+      - "tests/test_common_tc17_tc50.cpp"
   workflow_dispatch:
 
 jobs:
@@ -26,16 +28,18 @@ jobs:
       - name: Configure Release build
         run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DMINITENSOR_ENABLE_LTO=OFF
 
-      - name: Build TC01-TC16 test driver
-        run: cmake --build build --target test_common_tc01_tc16 --parallel 2
+      - name: Build all targets
+        run: cmake --build build --parallel 2
 
-      - name: Run common functional tests
-        run: ctest --test-dir build --output-on-failure -R CommonSpecTC01TC16Tests
+      - name: Run all CTest suites
+        run: ctest --test-dir build --output-on-failure
 
-      - name: Upload raw CSV results
+      - name: Upload TC01-TC50 raw results
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: tc01-tc16-results
-          path: build/tc01_tc16_results.csv
+          name: tc01-tc50-results
+          path: |
+            build/tc01_tc16_results.csv
+            build/tc17_tc50_results.csv
           if-no-files-found: warn
