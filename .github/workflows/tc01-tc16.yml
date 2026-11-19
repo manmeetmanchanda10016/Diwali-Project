@@ -1,0 +1,41 @@
+name: Common Tensor Tests TC01-TC16
+
+on:
+  push:
+    paths:
+      - "CMakeLists.txt"
+      - "include/minitensor/**"
+      - "src/**"
+      - "tests/test_common_tc01_tc16.cpp"
+      - ".github/workflows/tc01-tc16.yml"
+  pull_request:
+    paths:
+      - "CMakeLists.txt"
+      - "include/minitensor/**"
+      - "src/**"
+      - "tests/test_common_tc01_tc16.cpp"
+  workflow_dispatch:
+
+jobs:
+  functional-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Configure Release build
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DMINITENSOR_ENABLE_LTO=OFF
+
+      - name: Build TC01-TC16 test driver
+        run: cmake --build build --target test_common_tc01_tc16 --parallel 2
+
+      - name: Run common functional tests
+        run: ctest --test-dir build --output-on-failure -R CommonSpecTC01TC16Tests
+
+      - name: Upload raw CSV results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tc01-tc16-results
+          path: build/tc01_tc16_results.csv
+          if-no-files-found: warn
